@@ -8,12 +8,29 @@ import numpy as np
 import tkinter as tk
 from PIL import Image, ImageTk
 
+
+
+
 class UmbralApp:
+
+    
+    # #!Pronando
+    # def stop_propagation(self, event):
+    #     return "break"
+
+
     def __init__(self, master):
         self.master = master
         self.points = []
         self.scale = 10.0    # 10mm (PATRÓN DE MEDICIÓN)
         self.spacing = 3.0   # 3mm (TAMAÑO DEL UMBRAL)
+
+        # Variables de zoom
+        self.zoom_factor = 1.0
+        self.zoom_step = 0.1  # Ajusta este valor para definir la cantidad de zoom por paso
+        self.max_zoom = 3.0    # Zoom máximo
+        self.min_zoom = 0.5    # Zoom mínimo
+
         self.msg = 'Seleccione en forma Vertical'
         self.angulo = 0
         
@@ -24,6 +41,8 @@ class UmbralApp:
         if not self.cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
             exit()  # Salir si la cámara no se abre
+
+       
 
         self.update_frame()  # Iniciar el ciclo de actualización del frame
 
@@ -42,10 +61,39 @@ class UmbralApp:
         self.master.bind("<Button-1>", self.clics)  # Evento de clic en el canvas
         self.master.bind('l', self.rotar_izquierda)  # Evento para rotar a la izquierda
         self.master.bind('r', self.rotar_derecha)    # Evento para rotar a la derecha
+        self.master.bind('+', self.zoom_in)          # Evento de zoom in
+        self.master.bind('-', self.zoom_out)         # Evento de zoom out
 
         # Crear un canvas para mostrar el feed de la webcam
-        self.canvas = tk.Canvas(self.master, width=800, height=600)
+        self.canvas_width = 640
+        self.canvas_height = 480
+        self.canvas = tk.Canvas(self.master, width=self.canvas_width, height=self.canvas_height)
         self.canvas.pack()
+
+
+
+
+
+
+
+
+        #!!!! Botón para imprimir tamaños
+        self.button_get_sizes = tk.Button(self.master, text="Obtener tamaños", command=self.get_sizes)
+        self.button_get_sizes.pack()
+
+
+        #!!!! Botón + de ZOOM
+        self.button_zoom_in = tk.Button(self.master, text="🔎+", command=self.get_sizes)
+        self.button_zoom_in.pack()
+        #!!!! Botón - de ZOOM
+        self.button_zoom_out = tk.Button(self.master, text="🔎-", command=self.get_sizes)
+        self.button_zoom_out.pack()
+
+
+        
+
+
+
 
         # Label y Textbox para scale (tamaño del PATRÓN)
         self.label_scale = tk.Label(self.master, text="SCALE:", bg="lightgray")
@@ -53,21 +101,41 @@ class UmbralApp:
         self.scale1 = tk.Entry(self.master, width=8)
         self.scale1.insert(0, str(self.scale))
         # self.scale1.place(x=720, y=10)
+        #!Probando
+        self.scale1.pack()
+        # self.scale1.bind("<Button-1>", self.stop_propagation)
+
 
         # Label y Textbox para spacing (Distancia entre líneas del centro - UMBRAL)
         self.label_spacing = tk.Label(self.master, text="SPACING:", bg="lightgray")
         self.spacing1 = tk.Entry(self.master, width=8)
         self.spacing1.insert(0, str(self.spacing))
+        #!Probando
+        self.spacing1.pack()
+        # self.spacing1.bind("<Button-1>", self.stop_propagation)
         
+
+
         # Botón para actualizar valores
         self.button_update = tk.Button(self.master, text="Actualizar", command=self.update_values)
-        
+        #!Probando
+        self.button_update.pack()
+        # self.button_update.bind("<Button-1>", self.stop_propagation)
+
+
+
         # Footer
         self.label_info_rotar = tk.Label(self.master, text="Rotar: (L) (R)", bg="lightgray", font=("Helvetica", 8, "bold"))
         self.label_info_rotar.pack()
 
         self.label_info_limpiar = tk.Label(self.master, text="Limpiar: (N)", bg="lightgray", font=("Helvetica", 8, "bold"))
         self.label_info_limpiar.pack()  # o place, según tu diseño
+
+        self.label_info_zoomInOut = tk.Label(self.master, text="ZoomIN-OUT: (+)(-)", bg="lightgray", font=("Helvetica", 8, "bold"))
+        self.label_info_zoomInOut.pack()  # o place, según tu diseño
+        
+        # self.label_info_zoomOUT = tk.Label(self.master, text="ZoomOUT: (-)", bg="lightgray", font=("Helvetica", 8, "bold"))
+        # self.label_info_zoomOUT.pack()  # o place, según tu diseño
         
         self.label_coordenadas = tk.Label(self.master, text="X, Y: (0, 0)", bg="lightgray")
         self.label_coordenadas.pack()  # o place según tu diseño
@@ -80,6 +148,12 @@ class UmbralApp:
 
         # Actualizar tareas pendientes para calcular el tamaño del Label
         self.master.update_idletasks()
+
+
+
+
+
+
 
     def on_resize(self, event):
         """Ajusta la posición de los elementos al redimensionar la ventana."""
@@ -100,13 +174,25 @@ class UmbralApp:
         canvas_width = self.master.winfo_width()  # Obtener el ancho del root
         canvas_height = self.master.winfo_height()  # Obtener el alto del root
         
+        label_info_zoomInOut_width = self.label_info_zoomInOut.winfo_width()
+        # label_info_zoomOUT_width = self.label_info_zoomOUT.winfo_width()
         label_info_rotar_width = self.label_info_rotar.winfo_width()
         info_limpiar_width = self.label_info_limpiar.winfo_width()  # Obtener el alto del root
         label_coordenadas_width = self.label_coordenadas.winfo_width()
         label_punto1_width = self.label_punto1.winfo_width()
 
+        
 
-        padding = 20  # Espacio desde el borde derecho
+
+
+        #? PROBANDO BOTÓN ZOOM
+        button_zoom_in_height = self.button_zoom_in.winfo_height()    # Ancho de botón zoom_in
+        button_zoom_out_height = self.button_zoom_out.winfo_height()    # Ancho de botón zoom_in
+
+
+
+
+
         padding2 = 80
         self.label_scale.place(x=canvas_width - padding2 - self.label_scale.winfo_width(), y=10)
         self.scale1.place(x=canvas_width - 20 - self.scale1.winfo_width(), y=10)
@@ -114,27 +200,36 @@ class UmbralApp:
         self.label_spacing.place(x=canvas_width - padding2 - self.label_spacing.winfo_width(), y=40)
         self.spacing1.place(x=canvas_width - 20 - self.spacing1.winfo_width(), y=40)
         
-        self.button_update.place(x=canvas_width - 50 - self.button_update.winfo_width(), y=70)
+        self.button_update.place(x=canvas_width - 19 - self.button_update.winfo_width(), y=70)
 
         self.label_info_rotar.place(x=8, y=canvas_height - 25)  # Posición inicial
         self.label_info_limpiar.place(x=label_info_rotar_width + 20, y=canvas_height - 25)
 
-        self.label_coordenadas.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)
+        self.label_info_zoomInOut.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)  # Posición inicial
+        # self.label_info_zoomOUT.place(x=label_info_rotar_width + info_limpiar_width + label_info_zoomIN_width + 20 + 11, y=canvas_height - 25)  # Posición inicial
+        self.label_coordenadas.place(x=label_info_rotar_width + info_limpiar_width + label_info_zoomInOut_width + 20 + 21, y=canvas_height - 25)
 
-        self.label_punto1.place(x=label_info_rotar_width + info_limpiar_width + label_coordenadas_width + 20 + 11 + 11, y=canvas_height - 25)
+        self.label_punto1.place(x=label_info_rotar_width + info_limpiar_width + label_coordenadas_width + label_info_zoomInOut_width + 20 + 11 + 11, y=canvas_height - 25)
 
-        self.label_punto2.place(x=label_info_rotar_width + info_limpiar_width + label_coordenadas_width + label_punto1_width + 20 + 11 + 11, y=canvas_height - 25)
+        self.label_punto2.place(x=label_info_rotar_width + info_limpiar_width + label_coordenadas_width + label_punto1_width+ label_info_zoomInOut_width + 20 + 11 + 11, y=canvas_height - 25)
+        
+        
+        
+
+
+        #? PROBANDO BOTÓN ZOOM
+        self.button_zoom_in.place(x=canvas_width - 19 - self.button_zoom_in.winfo_width(), y=100)
+        self.button_zoom_out.place(x=canvas_width - 19 - self.button_zoom_out.winfo_width(), y=130)
+        
+
+
+        
 
     def update_values(self):
         """Actualiza los valores de scale y spacing según la entrada del usuario."""
         self.scale = float(self.scale1.get())
         self.spacing = float(self.spacing1.get())
 
-    def clics(self, event):
-        """Captura los puntos seleccionados con el mouse."""
-        x, y = event.x, event.y
-        if len(self.points) < 2:
-            self.points.append([x, y])
 
     def dibujando_puntos(self, frame):
         """Dibuja los puntos seleccionados en el frame."""
@@ -167,6 +262,12 @@ class UmbralApp:
         self.label_coordenadas.config(text=f"X, Y: ({x}, {y})")
 
     def clics(self, event):
+        # Verifica si el widget que disparó el evento no es un Button o Entry
+        if isinstance(event.widget, tk.Button) or isinstance(event.widget, tk.Entry):
+            return  # Si es un botón o entrada de texto, no hacer nada
+        # Aquí va el resto de tu lógica de clic
+        print("Clic en el canvas o en área no prohibida")
+
     # Captura los puntos seleccionados con el mouse y actualiza los labels de los puntos.
         x, y = event.x, event.y
         if len(self.points) < 2:
@@ -184,16 +285,80 @@ class UmbralApp:
         # Actualiza el label del segundo punto con las coordenadas seleccionadas.
         self.label_punto2.config(text=f"P2: ({x}, {y})")
 
+
+
+
+
+    def zoom_in(self, event):
+        """Incrementa el factor de zoom."""
+        if self.zoom_factor < self.max_zoom:
+            self.zoom_factor += self.zoom_step
+        print(f"Zoom In: Factor de zoom = {self.zoom_factor}")
+
+    def zoom_out(self, event):
+        """Decrementa el factor de zoom."""
+        if self.zoom_factor > self.min_zoom:
+            self.zoom_factor -= self.zoom_step
+        print(f"Zoom Out: Factor de zoom = {self.zoom_factor}")
+
+
+
+
+
+
+
+    #!!!!! Obtener valores de tamaños
+    def get_sizes(self):
+        """Obtiene los tamaños del root, canvas, y frame y los imprime."""
+        # Tamaño del root
+        root_width = self.master.winfo_width()
+        root_height = self.master.winfo_height()
+        print(f"Tamaño del root: {root_width}x{root_height}")
+
+        # Tamaño del canvas
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        print(f"Tamaño del canvas: {canvas_width}x{canvas_height}")
+
+        # Tamaño del frame (de la cámara)
+        ret, frame = self.cap.read()
+        if ret:
+            frame_height, frame_width = frame.shape[:2]
+            print(f"Tamaño del frame: {frame_width}x{frame_height}")
+        else:
+            print("No se pudo obtener el frame de la cámara.")
+
+
+
+
+
+
+
+
+
+
     def update_frame(self):
         # Actualiza el feed de la cámara continuamente.
         ret, frame = self.cap.read()
         if not ret:
             return 
 
-        # Redimensionar el frame al tamaño del canvas
+
+        # Redimensionar el frame aplicando el factor de zoom
+        height, width = frame.shape[:2]
+        new_width = int(width * self.zoom_factor)
+        new_height = int(height * self.zoom_factor)
+        frame = cv2.resize(frame, (new_width, new_height))
+
+        # Si el frame es más grande que el canvas, recortarlo para centrarse en el medio
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        frame = cv2.resize(frame, (canvas_width, canvas_height))
+        if new_width > canvas_width or new_height > canvas_height:
+            x_start = (new_width - canvas_width) // 2
+            y_start = (new_height - canvas_height) // 2
+            frame = frame[y_start:y_start + canvas_height, x_start:x_start + canvas_width]
+
+
 
         frame = self.rotar_imagen(frame, self.angulo)
         self.dibujando_puntos(frame)
@@ -201,15 +366,15 @@ class UmbralApp:
         # Mensaje si se ha seleccionado un solo punto
         if len(self.points) == 1:
             cv2.putText(frame, f'{self.msg}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
-            print("Puntos: ", self.points)
+            # print("Puntos: ", self.points)
         
         # Dibuja líneas si se han seleccionado dos puntos
         if len(self.points) == 2:
             p1, p2 = self.points
-            print('Punto1: ', p1)
-            print('Punto2: ', p2)
+            # print('Punto1: ', p1)
+            # print('Punto2: ', p2)
             pixel_distance = np.linalg.norm(np.array(p2) - np.array(p1))
-            x_pixel = (self.spacing * pixel_distance) / self.scale
+            x_pixel = (self.spacing * pixel_distance) / self.scale  
             centro_x = frame.shape[1] // 2
             centro_y = frame.shape[0] // 2
             
@@ -224,8 +389,8 @@ class UmbralApp:
             centro_horizontal_end = (int(centro_x + frame.shape[1] // 4), centro_y)
 
             # Dibujar líneas
-            cv2.line(frame, line1_start, line1_end, (255,0,0), 1)
-            cv2.line(frame, line2_start, line2_end, (255,0,0), 1)
+            cv2.line(frame, line1_start, line1_end, (0,0,0), 2)
+            cv2.line(frame, line2_start, line2_end, (0,0,0), 2)
             cv2.line(frame, centro_vertical_start, centro_vertical_end, (0,255,0), 1)
             cv2.line(frame, centro_horizontal_start, centro_horizontal_end, (0,255,0), 1)
 
@@ -245,10 +410,12 @@ class UmbralApp:
 
 
 # Dirección IP de la cámara
-rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
-ip = "http://192.168.43.172:4747/video"
+# rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
+# ip = "http://192.168.220.35:4747/video"
 # ip = "http://192.168.1.3:4747/video"
-# ip = 1
+# ip = "http://192.168.43.172:4747/video"
+ip = 1
+# ip = "rtsp://admin:Royo12345@192.168.13.12:80/cam/realmonitor?channel=1&subtype=0"
 
 
 if __name__ == "__main__":
