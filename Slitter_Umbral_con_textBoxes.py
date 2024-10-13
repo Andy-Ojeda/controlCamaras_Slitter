@@ -13,12 +13,6 @@ from PIL import Image, ImageTk
 
 class UmbralApp:
 
-    
-    # #!Pronando
-    # def stop_propagation(self, event):
-    #     return "break"
-
-
     def __init__(self, master):
         self.master = master
         self.points = []
@@ -64,11 +58,40 @@ class UmbralApp:
         self.master.bind('+', self.zoom_in)          # Evento de zoom in
         self.master.bind('-', self.zoom_out)         # Evento de zoom out
 
+
+        #! Frame para los controles superiores
+        control_frame = tk.Frame(self.master, bg="lightgray", height=30)
+        control_frame.pack(side=tk.TOP, fill=tk.X)
+        control_frame.pack_propagate(False)  # Evita que el frame ajuste automáticamente su tamaño
+
+        #! Frame para el canvas
+        camera_frame = tk.Frame(self.master, highlightthickness=2)
+        camera_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+
         # Crear un canvas para mostrar el feed de la webcam
         self.canvas_width = 640
         self.canvas_height = 480
-        self.canvas = tk.Canvas(self.master, width=self.canvas_width, height=self.canvas_height)
-        self.canvas.pack()
+        self.canvas = tk.Canvas(camera_frame, width=self.canvas_width, height=self.canvas_height)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Crear barra de desplazamiento vertical
+        self.v_scrollbar = tk.Scrollbar(camera_frame, orient="vertical", command=self.canvas.yview)
+        self.v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.h_scrollbar = tk.Scrollbar(self.master, orient="horizontal", command=self.canvas.xview)
+        self.h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Configurar el canvas para que use las barras de desplazamiento
+        self.canvas.configure(yscrollcommand=self.v_scrollbar.set, xscrollcommand=self.h_scrollbar.set)
+
+        # Ajustar la región de desplazamiento del canvas
+        self.canvas.config(scrollregion=(0, 0, self.canvas_width, self.canvas_height))
+
+        # Actualizar tareas pendientes para calcular el tamaño
+        self.master.update_idletasks()
+
+        
 
 
 
@@ -76,17 +99,15 @@ class UmbralApp:
 
 
 
-
-        #!!!! Botón para imprimir tamaños
-        self.button_get_sizes = tk.Button(self.master, text="Obtener tamaños", command=self.get_sizes)
-        self.button_get_sizes.pack()
-
+        # #!!!! Botón para imprimir tamaños
+        # self.button_get_sizes = tk.Button(control_frame, text="Obtener tamaños", command=self.get_sizes)
+        # self.button_get_sizes.pack()
 
         #!!!! Botón + de ZOOM
-        self.button_zoom_in = tk.Button(self.master, text="🔎+", command=self.get_sizes)
+        self.button_zoom_in = tk.Button(control_frame, text="🔎+", command=self.get_sizes)
         self.button_zoom_in.pack()
         #!!!! Botón - de ZOOM
-        self.button_zoom_out = tk.Button(self.master, text="🔎-", command=self.get_sizes)
+        self.button_zoom_out = tk.Button(control_frame, text="🔎-", command=self.get_sizes)
         self.button_zoom_out.pack()
 
 
@@ -96,9 +117,9 @@ class UmbralApp:
 
 
         # Label y Textbox para scale (tamaño del PATRÓN)
-        self.label_scale = tk.Label(self.master, text="SCALE:", bg="lightgray")
+        self.label_scale = tk.Label(control_frame, text="Patrón:", bg="lightgray")
         # self.label_scale.place(x=650, y=10)  # Posición inicial
-        self.scale1 = tk.Entry(self.master, width=8)
+        self.scale1 = tk.Entry(control_frame, width=5)
         self.scale1.insert(0, str(self.scale))
         # self.scale1.place(x=720, y=10)
         #!Probando
@@ -107,8 +128,8 @@ class UmbralApp:
 
 
         # Label y Textbox para spacing (Distancia entre líneas del centro - UMBRAL)
-        self.label_spacing = tk.Label(self.master, text="SPACING:", bg="lightgray")
-        self.spacing1 = tk.Entry(self.master, width=8)
+        self.label_spacing = tk.Label(control_frame, text="Umbral:", bg="lightgray")
+        self.spacing1 = tk.Entry(control_frame, width=5)
         self.spacing1.insert(0, str(self.spacing))
         #!Probando
         self.spacing1.pack()
@@ -117,7 +138,7 @@ class UmbralApp:
 
 
         # Botón para actualizar valores
-        self.button_update = tk.Button(self.master, text="Actualizar", command=self.update_values)
+        self.button_update = tk.Button(control_frame, text="OK", command=self.update_values)
         #!Probando
         self.button_update.pack()
         # self.button_update.bind("<Button-1>", self.stop_propagation)
@@ -192,21 +213,27 @@ class UmbralApp:
 
 
 
+        self.label_scale.place(x=5, y=4)
+        self.scale1.place(x=48, y=5)
+        
+        self.label_spacing.place(x=85, y=4)
+        self.spacing1.place(x=132, y=5)
+        
+        self.button_update.place(x=175, y=2)
 
-        padding2 = 80
-        self.label_scale.place(x=canvas_width - padding2 - self.label_scale.winfo_width(), y=10)
-        self.scale1.place(x=canvas_width - 20 - self.scale1.winfo_width(), y=10)
+        #? PROBANDO BOTÓN ZOOM
+        self.button_zoom_in.place(x=250, y=2)
+        self.button_zoom_out.place(x=283, y=2)
         
-        self.label_spacing.place(x=canvas_width - padding2 - self.label_spacing.winfo_width(), y=40)
-        self.spacing1.place(x=canvas_width - 20 - self.spacing1.winfo_width(), y=40)
-        
-        self.button_update.place(x=canvas_width - 19 - self.button_update.winfo_width(), y=70)
+
+        #!!!!!!!!!!!! Probando
+        self.h_scrollbar.place(x=canvas_width - 80, y=canvas_height - 23)
+
 
         self.label_info_rotar.place(x=8, y=canvas_height - 25)  # Posición inicial
         self.label_info_limpiar.place(x=label_info_rotar_width + 20, y=canvas_height - 25)
 
         self.label_info_zoomInOut.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)  # Posición inicial
-        # self.label_info_zoomOUT.place(x=label_info_rotar_width + info_limpiar_width + label_info_zoomIN_width + 20 + 11, y=canvas_height - 25)  # Posición inicial
         self.label_coordenadas.place(x=label_info_rotar_width + info_limpiar_width + label_info_zoomInOut_width + 20 + 21, y=canvas_height - 25)
 
         self.label_punto1.place(x=label_info_rotar_width + info_limpiar_width + label_coordenadas_width + label_info_zoomInOut_width + 20 + 11 + 11, y=canvas_height - 25)
@@ -216,11 +243,6 @@ class UmbralApp:
         
         
 
-
-        #? PROBANDO BOTÓN ZOOM
-        self.button_zoom_in.place(x=canvas_width - 19 - self.button_zoom_in.winfo_width(), y=100)
-        self.button_zoom_out.place(x=canvas_width - 19 - self.button_zoom_out.winfo_width(), y=130)
-        
 
 
         
@@ -249,12 +271,12 @@ class UmbralApp:
 
     def rotar_izquierda(self, event):
         """Rota la imagen 10 grados a la izquierda."""
-        self.angulo += 10  # Decrementa el ángulo
+        self.angulo += 2  # Decrementa el ángulo
         print(f"Rotando a la izquierda: {self.angulo} grados")
 
     def rotar_derecha(self, event):
         """Rota la imagen 10 grados a la derecha."""
-        self.angulo -= 10  # Incrementa el ángulo
+        self.angulo -= 2  # Incrementa el ángulo
         print(f"Rotando a la derecha: {self.angulo} grados")
 
     def mostrar_coordenadas(self, event):
@@ -265,8 +287,7 @@ class UmbralApp:
         # Verifica si el widget que disparó el evento no es un Button o Entry
         if isinstance(event.widget, tk.Button) or isinstance(event.widget, tk.Entry):
             return  # Si es un botón o entrada de texto, no hacer nada
-        # Aquí va el resto de tu lógica de clic
-        print("Clic en el canvas o en área no prohibida")
+        
 
     # Captura los puntos seleccionados con el mouse y actualiza los labels de los puntos.
         x, y = event.x, event.y
@@ -351,17 +372,20 @@ class UmbralApp:
         frame = cv2.resize(frame, (new_width, new_height))
 
         # Si el frame es más grande que el canvas, recortarlo para centrarse en el medio
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        if new_width > canvas_width or new_height > canvas_height:
-            x_start = (new_width - canvas_width) // 2
-            y_start = (new_height - canvas_height) // 2
-            frame = frame[y_start:y_start + canvas_height, x_start:x_start + canvas_width]
+        # canvas_width = self.canvas.winfo_width()
+        # canvas_height = self.canvas.winfo_height()
+        # if new_width > canvas_width or new_height > canvas_height:
+        #     x_start = (new_width - canvas_width) // 2
+        #     y_start = (new_height - canvas_height) // 2
+        #     frame = frame[y_start:y_start + canvas_height, x_start:x_start + canvas_width]
 
 
 
         frame = self.rotar_imagen(frame, self.angulo)
         self.dibujando_puntos(frame)
+
+
+
 
         # Mensaje si se ha seleccionado un solo punto
         if len(self.points) == 1:
@@ -398,6 +422,28 @@ class UmbralApp:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(frame)
         imgtk = ImageTk.PhotoImage(image=img)
+
+
+
+
+
+
+
+
+
+        #! Ajustar el tamaño del canvas y las barras de desplazamiento
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
+        self.canvas.image = imgtk  # Guardar la referencia
+
+        # Ajustar el área desplazable del canvas
+        self.canvas.config(scrollregion=self.canvas.bbox(tk.ALL))
+
+
+
+
+
+
+
 
         # Actualizar el canvas con la nueva imagen
         self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
