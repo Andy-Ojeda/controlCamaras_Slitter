@@ -2,7 +2,7 @@
 #! Aplicación que crea Umbral según selección del Mouse.
 #? En pantalla muestra la cámara y textBoxes para configurar la pieza (patrón) a medir para crear un Umbral 
 #?    con referencia a él. Por ejemplo, según la pieza (patrón) de 10mm crea un Umbral de 3mm.  
-
+ 
 import cv2
 import numpy as np
 import tkinter as tk
@@ -49,6 +49,7 @@ class UmbralApp:
         icono = ImageTk.PhotoImage(file=logo_path)
         self.master.iconphoto(False, icono)
 
+
         # Conectar eventos
         self.master.bind('n', self.borrar_puntos)
         self.master.bind('<Configure>', self.on_resize)  # Evento de redimensionamiento
@@ -91,13 +92,7 @@ class UmbralApp:
         # Actualizar tareas pendientes para calcular el tamaño
         self.master.update_idletasks()
 
-        
-
-
-
-
-
-
+    
 
         # #!!!! Botón para imprimir tamaños
         # self.button_get_sizes = tk.Button(control_frame, text="Obtener tamaños", command=self.get_sizes)
@@ -109,11 +104,6 @@ class UmbralApp:
         #!!!! Botón - de ZOOM
         self.button_zoom_out = tk.Button(control_frame, text="🔎-", command=self.get_sizes)
         self.button_zoom_out.pack()
-
-
-        
-
-
 
 
         # Label y Textbox para scale (tamaño del PATRÓN)
@@ -133,7 +123,6 @@ class UmbralApp:
         self.spacing1.insert(0, str(self.spacing))
         #!Probando
         self.spacing1.pack()
-        # self.spacing1.bind("<Button-1>", self.stop_propagation)
         
 
 
@@ -141,8 +130,7 @@ class UmbralApp:
         self.button_update = tk.Button(control_frame, text="OK", command=self.update_values)
         #!Probando
         self.button_update.pack()
-        # self.button_update.bind("<Button-1>", self.stop_propagation)
-
+        
 
 
         # Footer
@@ -154,9 +142,6 @@ class UmbralApp:
 
         self.label_info_zoomInOut = tk.Label(self.master, text="ZoomIN-OUT: (+)(-)", bg="lightgray", font=("Helvetica", 8, "bold"))
         self.label_info_zoomInOut.pack()  # o place, según tu diseño
-        
-        # self.label_info_zoomOUT = tk.Label(self.master, text="ZoomOUT: (-)", bg="lightgray", font=("Helvetica", 8, "bold"))
-        # self.label_info_zoomOUT.pack()  # o place, según tu diseño
         
         self.label_coordenadas = tk.Label(self.master, text="X, Y: (0, 0)", bg="lightgray")
         self.label_coordenadas.pack()  # o place según tu diseño
@@ -284,12 +269,12 @@ class UmbralApp:
         self.label_coordenadas.config(text=f"X, Y: ({x}, {y})")
 
     def clics(self, event):
-        # Verifica si el widget que disparó el evento no es un Button o Entry
-        if isinstance(event.widget, tk.Button) or isinstance(event.widget, tk.Entry):
+        # Verifica si el widget que disparó el evento no es un Button o Entry o ScrollBar
+        if isinstance(event.widget, (tk.Button, tk.Entry, tk.Scrollbar)):
             return  # Si es un botón o entrada de texto, no hacer nada
         
 
-    # Captura los puntos seleccionados con el mouse y actualiza los labels de los puntos.
+        # Captura los puntos seleccionados con el mouse y actualiza los labels de los puntos.
         x, y = event.x, event.y
         if len(self.points) < 2:
             self.points.append([x, y])
@@ -371,6 +356,7 @@ class UmbralApp:
         new_height = int(height * self.zoom_factor)
         frame = cv2.resize(frame, (new_width, new_height))
 
+
         # Si el frame es más grande que el canvas, recortarlo para centrarse en el medio
         # canvas_width = self.canvas.winfo_width()
         # canvas_height = self.canvas.winfo_height()
@@ -384,39 +370,7 @@ class UmbralApp:
         frame = self.rotar_imagen(frame, self.angulo)
         self.dibujando_puntos(frame)
 
-
-
-
-        # Mensaje si se ha seleccionado un solo punto
-        if len(self.points) == 1:
-            cv2.putText(frame, f'{self.msg}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
-            # print("Puntos: ", self.points)
         
-        # Dibuja líneas si se han seleccionado dos puntos
-        if len(self.points) == 2:
-            p1, p2 = self.points
-            # print('Punto1: ', p1)
-            # print('Punto2: ', p2)
-            pixel_distance = np.linalg.norm(np.array(p2) - np.array(p1))
-            x_pixel = (self.spacing * pixel_distance) / self.scale  
-            centro_x = frame.shape[1] // 2
-            centro_y = frame.shape[0] // 2
-            
-            # Coordenadas de las líneas
-            line1_start = (0, int(centro_y - x_pixel // 2))
-            line1_end = (frame.shape[1], int(centro_y - x_pixel // 2))
-            line2_start = (0, int(centro_y + x_pixel // 2))
-            line2_end = (frame.shape[1], int(centro_y + x_pixel // 2))
-            centro_vertical_start = (centro_x, int(centro_y + x_pixel // 3))
-            centro_vertical_end = (centro_x, int(centro_y - x_pixel // 3))
-            centro_horizontal_start = (int(centro_x - frame.shape[1] // 4), centro_y)
-            centro_horizontal_end = (int(centro_x + frame.shape[1] // 4), centro_y)
-
-            # Dibujar líneas
-            cv2.line(frame, line1_start, line1_end, (0,0,0), 2)
-            cv2.line(frame, line2_start, line2_end, (0,0,0), 2)
-            cv2.line(frame, centro_vertical_start, centro_vertical_end, (0,255,0), 1)
-            cv2.line(frame, centro_horizontal_start, centro_horizontal_end, (0,255,0), 1)
 
         # Convertir el frame a formato compatible con tkinter
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -426,28 +380,62 @@ class UmbralApp:
 
 
 
-
-
-
-
-
         #! Ajustar el tamaño del canvas y las barras de desplazamiento
         self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
         self.canvas.image = imgtk  # Guardar la referencia
+
+
+        # Limpiar líneas anteriores en el canvas
+        self.canvas.delete("lines")
+
+
+        # Mensaje si se ha seleccionado un solo punto
+        if len(self.points) == 1:
+            cv2.putText(frame, f'{self.msg}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
+            # print("Puntos: ", self.points)
+        
+
+
+        # Dibuja líneas si se han seleccionado dos puntos
+        if len(self.points) == 2:
+            p1, p2 = self.points
+            pixel_distance = np.linalg.norm(np.array(p2) - np.array(p1))
+            x_pixel = (self.spacing * pixel_distance) / self.scale  
+            
+            #!Probando
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            centro_x = canvas_width // 2
+            centro_y = canvas_height // 2
+            
+            # Coordenadas de las líneas
+            line1_start = (0, int(centro_y - x_pixel // 2))
+            line1_end = (canvas_width, int(centro_y - x_pixel // 2))
+            line2_start = (0, int(centro_y + x_pixel // 2))
+            line2_end = (canvas_width, int(centro_y + x_pixel // 2))
+            centro_vertical_start = (centro_x, int(centro_y + x_pixel // 3))
+            centro_vertical_end = (centro_x, int(centro_y - x_pixel // 3))
+            centro_horizontal_start = (int(centro_x - canvas_width // 4), centro_y)
+            centro_horizontal_end = (int(centro_x + canvas_width // 4), centro_y)
+
+           
+
+             # Dibujar líneas en el canvas
+            self.canvas.create_line(line1_start, line1_end, fill="black", width=2, tags="lines")
+            self.canvas.create_line(line2_start, line2_end, fill="black", width=2, tags="lines")
+            self.canvas.create_line(centro_vertical_start, centro_vertical_end, fill="green", width=1, tags="lines")
+            self.canvas.create_line(centro_horizontal_start, centro_horizontal_end, fill="green", width=1, tags="lines")
+
+
+
+
+
 
         # Ajustar el área desplazable del canvas
         self.canvas.config(scrollregion=self.canvas.bbox(tk.ALL))
 
 
-
-
-
-
-
-
-        # Actualizar el canvas con la nueva imagen
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
-        self.canvas.imgtk = imgtk  # Guardar la referencia para evitar que la imagen sea recolectada por el garbage collector
 
         # Llamar nuevamente a update_frame
         self.master.after(10, self.update_frame)
@@ -457,11 +445,8 @@ class UmbralApp:
 
 # Dirección IP de la cámara
 # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
-# ip = "http://192.168.220.35:4747/video"
-# ip = "http://192.168.1.3:4747/video"
 # ip = "http://192.168.43.172:4747/video"
 ip = 1
-# ip = "rtsp://admin:Royo12345@192.168.13.12:80/cam/realmonitor?channel=1&subtype=0"
 
 
 if __name__ == "__main__":
