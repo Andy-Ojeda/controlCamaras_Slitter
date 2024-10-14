@@ -23,7 +23,7 @@ class UmbralApp:
         self.zoom_factor = 1.0
         self.zoom_step = 0.1  # Ajusta este valor para definir la cantidad de zoom por paso
         self.max_zoom = 3.0    # Zoom máximo
-        self.min_zoom = 0.5    # Zoom mínimo
+        self.min_zoom = 0.0    # Zoom mínimo
 
         self.msg = 'Seleccione en forma Vertical'
         self.angulo = 0
@@ -31,7 +31,7 @@ class UmbralApp:
         self.setup_ui()  # Configurar la interfaz gráfica
 
         # Intentar abrir la cámara
-        self.cap = cv2.VideoCapture(ip)
+        self.cap = cv2.VideoCapture(url)
         if not self.cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
             exit()  # Salir si la cámara no se abre
@@ -130,6 +130,12 @@ class UmbralApp:
         self.button_update = tk.Button(control_frame, text="OK", command=self.update_values)
         #!Probando
         self.button_update.pack()
+
+        #! Probando (Label Zoom_Factor)
+        self.label_info_ZOOM = tk.Label(control_frame, text=f"x{self.zoom_factor}", bg="lightgray")
+        self.label_info_ZOOM.pack()
+
+
         
 
 
@@ -205,6 +211,8 @@ class UmbralApp:
         self.spacing1.place(x=132, y=5)
         
         self.button_update.place(x=175, y=2)
+
+        self.label_info_ZOOM.place(x=320, y=4)
 
         #? PROBANDO BOTÓN ZOOM
         self.button_zoom_in.place(x=250, y=2)
@@ -300,12 +308,15 @@ class UmbralApp:
         if self.zoom_factor < self.max_zoom:
             self.zoom_factor += self.zoom_step
         print(f"Zoom In: Factor de zoom = {self.zoom_factor}")
+        self.label_info_ZOOM.config(text=f"x{self.zoom_factor:.1f}")  # Limpiar el label del punto 1
+        
 
     def zoom_out(self, event):
         """Decrementa el factor de zoom."""
         if self.zoom_factor > self.min_zoom:
             self.zoom_factor -= self.zoom_step
         print(f"Zoom Out: Factor de zoom = {self.zoom_factor}")
+        self.label_info_ZOOM.config(text=f"x{self.zoom_factor:.1f}")  # Limpiar el label del punto 1
 
 
 
@@ -446,8 +457,10 @@ class UmbralApp:
 # Dirección IP de la cámara
 # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
 # ip = "http://192.168.43.172:4747/video"
-ip = 1
-
+# ip = 1
+ip = "192.168.13.13"
+url = f"rtsp://admin:Royo12345@{ip}:80/cam/realmonitor?channel=1&subtype=0"
+ 
 
 if __name__ == "__main__":
     root = tk.Tk()                  # Creo ventana principal "root"
