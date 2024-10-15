@@ -14,10 +14,29 @@ from PIL import Image, ImageTk
 class UmbralApp:
 
     def __init__(self, master):
+
+
+        # Dirección IP de la cámara
+        # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
+        # ip = "http://192.168.43.172:4747/video"
+        # url = 1
+        ip = "192.168.13.10"
+        url = f"rtsp://admin:Royo12345@{ip}:80/cam/realmonitor?channel=1&subtype=0"
+ 
+
+
         self.master = master
+        
+        # Estado inicial para la cámara
+        self.cap = None
+
         self.points = []
         self.scale = 10.0    # 10mm (PATRÓN DE MEDICIÓN)
         self.spacing = 3.0   # 3mm (TAMAÑO DEL UMBRAL)
+
+        self.desplazamiento_y = 0
+        self.anguloIzq = 0
+        self.anguloDer = 0
 
         # Variables de zoom
         self.zoom_factor = 1.0
@@ -29,12 +48,14 @@ class UmbralApp:
         self.angulo = 0
         
         self.setup_ui()  # Configurar la interfaz gráfica
+        self.mostrar_pantalla_negra()
 
         # Intentar abrir la cámara
         self.cap = cv2.VideoCapture(url)
         if not self.cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
-            exit()  # Salir si la cámara no se abre
+            self.mostrar_pantalla_negra()
+            # exit()  # Salir si la cámara no se abre
 
        
 
@@ -50,16 +71,6 @@ class UmbralApp:
         self.master.iconphoto(False, icono)
 
 
-        # Conectar eventos
-        self.master.bind('n', self.borrar_puntos)
-        self.master.bind('<Configure>', self.on_resize)  # Evento de redimensionamiento
-        self.master.bind("<Button-1>", self.clics)  # Evento de clic en el canvas
-        self.master.bind('l', self.rotar_izquierda)  # Evento para rotar a la izquierda
-        self.master.bind('r', self.rotar_derecha)    # Evento para rotar a la derecha
-        self.master.bind('+', self.zoom_in)          # Evento de zoom in
-        self.master.bind('-', self.zoom_out)         # Evento de zoom out
-
-
         #! Frame para los controles superiores
         control_frame = tk.Frame(self.master, bg="lightgray", height=30)
         control_frame.pack(side=tk.TOP, fill=tk.X)
@@ -73,8 +84,9 @@ class UmbralApp:
         # Crear un canvas para mostrar el feed de la webcam
         self.canvas_width = 640
         self.canvas_height = 480
-        self.canvas = tk.Canvas(camera_frame, width=self.canvas_width, height=self.canvas_height)
+        self.canvas = tk.Canvas(camera_frame, width=self.canvas_width, height=self.canvas_height, bg="black")
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
 
         # Crear barra de desplazamiento vertical
         self.v_scrollbar = tk.Scrollbar(camera_frame, orient="vertical", command=self.canvas.yview)
@@ -99,11 +111,33 @@ class UmbralApp:
         # self.button_get_sizes.pack()
 
         #!!!! Botón + de ZOOM
-        self.button_zoom_in = tk.Button(control_frame, text="🔎+", command=self.get_sizes)
+        self.button_zoom_in = tk.Button(control_frame, text="🔎+", command=self.zoom_in)
         self.button_zoom_in.pack()
         #!!!! Botón - de ZOOM
-        self.button_zoom_out = tk.Button(control_frame, text="🔎-", command=self.get_sizes)
+        self.button_zoom_out = tk.Button(control_frame, text="🔎-", command=self.zoom_out)
         self.button_zoom_out.pack()
+
+
+
+        #! Botones para mover las líneas hacia arriba y abajo
+        self.boton_arriba = tk.Button(control_frame, text="🔺", command=self.mover_arriba)
+        self.boton_arriba.pack(side=tk.LEFT)
+        self.boton_arriba['state'] = 'disabled'
+        
+        self.boton_abajo = tk.Button(control_frame, text="🔻", command=self.mover_abajo)
+        self.boton_abajo.pack(side=tk.LEFT)
+        self.boton_abajo['state'] = 'disabled'
+
+        #! Botones para rotar las líneas a la izquierda y derecha
+        self.boton_izquierda = tk.Button(control_frame, text=" ↪ ", command=self.rotar_Umbral_izquierda)
+        self.boton_izquierda.pack(side=tk.LEFT)
+        self.boton_izquierda['state'] = 'disabled'
+        
+        self.boton_derecha = tk.Button(control_frame, text=" ↩ ", command=self.rotar_Umbral_derecha)
+        self.boton_derecha.pack(side=tk.LEFT)
+        self.boton_derecha['state'] = 'disabled'
+
+
 
 
         # Label y Textbox para scale (tamaño del PATRÓN)
@@ -158,12 +192,57 @@ class UmbralApp:
         self.label_punto2 = tk.Label(self.master, text="P2: (0, 0)", bg="lightgray")
         self.label_punto2.pack()  # o place según tu diseño
 
-        # Actualizar tareas pendientes para calcular el tamaño del Label
-        self.master.update_idletasks()
+        # # Actualizar tareas pendientes para calcular el tamaño del Label
+        # self.master.update_idletasks()
+
+        
+        # Conectar eventos
+        self.master.bind('n', self.borrar_puntos)
+        self.master.bind('<Configure>', self.on_resize)  # Evento de redimensionamiento
+        self.master.bind("<Button-1>", self.clics)  # Evento de clic en el canvas
+        self.master.bind('l', self.rotar_izquierda)  # Evento para rotar a la izquierda
+        self.master.bind('r', self.rotar_derecha)    # Evento para rotar a la derecha
+        self.master.bind('+', self.zoom_in)          # Evento de zoom in
+        self.master.bind('-', self.zoom_out)         # Evento de zoom out
+
+        root.protocol("WM_DELETE_WINDOW", self.on_closing)
+    
+
+
+    #! Probando ----------------------------------
+    def mostrar_pantalla_negra(self):
+        # Rellenar el canvas con negro
+        self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, fill="black")
+         # Agregar el texto "Sin Señal" en el medio de la pantalla
+        self.canvas.create_text(self.canvas_width // 2, self.canvas_height // 2, text="Sin Señal", fill="red", font=("Helvetica", 24))
+
+    #!-----------------------------------------------
 
 
 
+    def mover_arriba(self):
+        # Ajusta el valor de desplazamiento
+        self.desplazamiento_y -= 1
+        # self.update_frame()
 
+    def mover_abajo(self):
+        # Ajusta el valor de desplazamiento
+        self.desplazamiento_y += 1
+        # self.update_frame()
+
+    def rotar_Umbral_izquierda(self):
+        # Ajusta el ángulo de rotación
+        self.anguloIzq += 1
+        self.anguloDer -= 1
+        # self.update_frame()
+        
+
+    def rotar_Umbral_derecha(self):
+        # Ajusta el ángulo de rotación
+        self.anguloIzq -= 1
+        self.anguloDer += 1
+        # self.update_frame()
+        
 
 
 
@@ -177,6 +256,12 @@ class UmbralApp:
         self.label_punto1.config(text="P1: (0, 0)")  # Limpiar el label del punto 1
         self.label_punto2.config(text="P2: (0, 0)")  # Limpiar el label del punto 2
     
+        
+        self.boton_arriba['state'] = 'disabled'
+        self.boton_abajo['state'] = 'disabled'
+        self.boton_izquierda['state'] = 'disabled'
+        self.boton_derecha['state'] = 'disabled'
+            
         print("Puntos borrados")
 
     def posicionar_desde_borde_derecho(self):
@@ -217,6 +302,11 @@ class UmbralApp:
         #? PROBANDO BOTÓN ZOOM
         self.button_zoom_in.place(x=250, y=2)
         self.button_zoom_out.place(x=283, y=2)
+
+        self.boton_arriba.place(x=390, y=2)
+        self.boton_abajo.place(x=415, y=2)
+        self.boton_izquierda.place(x=445, y=2)
+        self.boton_derecha.place(x=475, y=2)
         
 
         #!!!!!!!!!!!! Probando
@@ -303,7 +393,7 @@ class UmbralApp:
 
 
 
-    def zoom_in(self, event):
+    def zoom_in(self, event=None):
         """Incrementa el factor de zoom."""
         if self.zoom_factor < self.max_zoom:
             self.zoom_factor += self.zoom_step
@@ -311,7 +401,7 @@ class UmbralApp:
         self.label_info_ZOOM.config(text=f"x{self.zoom_factor:.1f}")  # Limpiar el label del punto 1
         
 
-    def zoom_out(self, event):
+    def zoom_out(self, event=None):
         """Decrementa el factor de zoom."""
         if self.zoom_factor > self.min_zoom:
             self.zoom_factor -= self.zoom_step
@@ -358,7 +448,8 @@ class UmbralApp:
         # Actualiza el feed de la cámara continuamente.
         ret, frame = self.cap.read()
         if not ret:
-            return 
+            self.mostrar_pantalla_negra()
+            # return 
 
 
         # Redimensionar el frame aplicando el factor de zoom
@@ -366,16 +457,6 @@ class UmbralApp:
         new_width = int(width * self.zoom_factor)
         new_height = int(height * self.zoom_factor)
         frame = cv2.resize(frame, (new_width, new_height))
-
-
-        # Si el frame es más grande que el canvas, recortarlo para centrarse en el medio
-        # canvas_width = self.canvas.winfo_width()
-        # canvas_height = self.canvas.winfo_height()
-        # if new_width > canvas_width or new_height > canvas_height:
-        #     x_start = (new_width - canvas_width) // 2
-        #     y_start = (new_height - canvas_height) // 2
-        #     frame = frame[y_start:y_start + canvas_height, x_start:x_start + canvas_width]
-
 
 
         frame = self.rotar_imagen(frame, self.angulo)
@@ -409,6 +490,11 @@ class UmbralApp:
 
         # Dibuja líneas si se han seleccionado dos puntos
         if len(self.points) == 2:
+            self.boton_arriba['state'] = 'normal'
+            self.boton_abajo['state'] = 'normal'
+            self.boton_izquierda['state'] = 'normal'
+            self.boton_derecha['state'] = 'normal'
+            
             p1, p2 = self.points
             pixel_distance = np.linalg.norm(np.array(p2) - np.array(p1))
             x_pixel = (self.spacing * pixel_distance) / self.scale  
@@ -418,13 +504,14 @@ class UmbralApp:
             canvas_height = self.canvas.winfo_height()
             
             centro_x = canvas_width // 2
-            centro_y = canvas_height // 2
+            centro_y = canvas_height // 2 + self.desplazamiento_y
             
             # Coordenadas de las líneas
-            line1_start = (0, int(centro_y - x_pixel // 2))
-            line1_end = (canvas_width, int(centro_y - x_pixel // 2))
-            line2_start = (0, int(centro_y + x_pixel // 2))
-            line2_end = (canvas_width, int(centro_y + x_pixel // 2))
+            line1_start = (0, int(centro_y - x_pixel // 2) + self.anguloIzq)
+            line1_end = (canvas_width, int(centro_y - x_pixel // 2) + self.anguloDer)
+            line2_start = (0, int(centro_y + x_pixel // 2) + self.anguloIzq)
+            line2_end = (canvas_width, int(centro_y + x_pixel // 2) + self.anguloDer)
+
             centro_vertical_start = (centro_x, int(centro_y + x_pixel // 3))
             centro_vertical_end = (centro_x, int(centro_y - x_pixel // 3))
             centro_horizontal_start = (int(centro_x - canvas_width // 4), centro_y)
@@ -454,19 +541,22 @@ class UmbralApp:
         self.master.bind("<Motion>", self.mostrar_coordenadas)
 
 
-# Dirección IP de la cámara
-# rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
-# ip = "http://192.168.43.172:4747/video"
-# ip = 1
-ip = "192.168.13.13"
-url = f"rtsp://admin:Royo12345@{ip}:80/cam/realmonitor?channel=1&subtype=0"
- 
+
+
+    def on_closing(self):
+        if self.cap is not None:
+            self.cap.release()
+        self.master.destroy()
+
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()                  # Creo ventana principal "root"
     app = UmbralApp(root)           # Llamo a la clase "UmbralApp" y todo lo ejecuto dentro de root
     root.mainloop()                 # Ejecuto continuamente root 
     
+    
     # Liberar la cámara cuando se cierre la ventana
-    app.cap.release()
+    # app.cap.release()
     cv2.destroyAllWindows()
