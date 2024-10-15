@@ -20,8 +20,8 @@ class UmbralApp:
         # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
         # ip = "http://192.168.43.172:4747/video"
         # url = 1
-        ip = "192.168.13.10"
-        url = f"rtsp://admin:Royo12345@{ip}:80/cam/realmonitor?channel=1&subtype=0"
+        self.ip = "192.168.13.10"
+        self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
  
 
 
@@ -29,6 +29,7 @@ class UmbralApp:
         
         # Estado inicial para la cámara
         self.cap = None
+        self.reconnect_button = None
 
         self.points = []
         self.scale = 10.0    # 10mm (PATRÓN DE MEDICIÓN)
@@ -48,18 +49,20 @@ class UmbralApp:
         self.angulo = 0
         
         self.setup_ui()  # Configurar la interfaz gráfica
-        self.mostrar_pantalla_negra()
+        # self.mostrar_pantalla_negra()
 
+        self.connect_camera()
+    
+    
+    def connect_camera(self):
         # Intentar abrir la cámara
-        self.cap = cv2.VideoCapture(url)
+        self.cap = cv2.VideoCapture(self.url)
         if not self.cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
             self.mostrar_pantalla_negra()
-            # exit()  # Salir si la cámara no se abre
-
-       
-
+        
         self.update_frame()  # Iniciar el ciclo de actualización del frame
+
 
     def setup_ui(self):
         """Configura la interfaz gráfica de la aplicación."""
@@ -215,8 +218,38 @@ class UmbralApp:
         self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, fill="black")
          # Agregar el texto "Sin Señal" en el medio de la pantalla
         self.canvas.create_text(self.canvas_width // 2, self.canvas_height // 2, text="Sin Señal", fill="red", font=("Helvetica", 24))
-
+        if self.reconnect_button is None:
+            self.reconnect_button = tk.Button(self.canvas, text="Reconectar", command=self.reconnect_camera)
+            self.reconnect_button.place(x=self.canvas_width // 2 - 50, y=(self.canvas_height // 2) + 30)
+        else:
+            self.reconnect_button.place_forget()  # Asegúrate de que el botón no esté visible antes
     #!-----------------------------------------------
+
+    def hide_reconnect_button(self):
+        # Ocultar el botón de reconexión si está visible
+        if self.reconnect_button is not None:
+            self.reconnect_button.place_forget()
+            self.reconnect_button = None
+
+
+    def reconnect_camera(self):
+        print("Reconectando cámara...1")  # Para depuración
+    
+        # Intentar reconectar la cámara
+        self.connect_camera()
+        print("Reconectando cámara...2")  # Para depuración
+    
+        # self.reconnect_button.pack_forget()
+        self.hide_reconnect_button()
+        print("Reconectando cámara...3")  # Para depuración
+    
+        # self.reconnect_button = None
+
+
+
+
+
+
 
 
 
