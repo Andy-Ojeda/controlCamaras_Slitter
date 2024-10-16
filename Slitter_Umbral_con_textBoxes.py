@@ -18,10 +18,10 @@ class UmbralApp:
 
         # Dirección IP de la cámara
         # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
-        # ip = "http://192.168.43.172:4747/video"
-        # url = 1
-        self.ip = "192.168.13.10"
-        self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
+        # self.ip = "http://192.168.43.172:4747/video"
+        self.url = 1
+        # self.ip = "192.168.13.10"
+        # self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
  
 
 
@@ -89,6 +89,8 @@ class UmbralApp:
         self.canvas_height = 480
         self.canvas = tk.Canvas(camera_frame, width=self.canvas_width, height=self.canvas_height, bg="black")
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+
 
 
         # Crear barra de desplazamiento vertical
@@ -173,7 +175,9 @@ class UmbralApp:
         self.label_info_ZOOM.pack()
 
 
-        
+
+
+
 
 
         # Footer
@@ -195,10 +199,7 @@ class UmbralApp:
         self.label_punto2 = tk.Label(self.master, text="P2: (0, 0)", bg="lightgray")
         self.label_punto2.pack()  # o place según tu diseño
 
-        # # Actualizar tareas pendientes para calcular el tamaño del Label
-        # self.master.update_idletasks()
 
-        
         # Conectar eventos
         self.master.bind('n', self.borrar_puntos)
         self.master.bind('<Configure>', self.on_resize)  # Evento de redimensionamiento
