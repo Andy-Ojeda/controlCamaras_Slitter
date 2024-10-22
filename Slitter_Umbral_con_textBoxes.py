@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import tkinter as tk
 from PIL import Image, ImageTk
+import threading
 
 
 
@@ -35,6 +36,7 @@ class UmbralApp:
         self.scale = 10.0               # 10mm (PATRÓN DE MEDICIÓN)
         self.spacing = 3.0              # 3mm (TAMAÑO DEL UMBRAL)
         self.linea_de_inicio = 47.0     # 47mm (Distancia desde prensa a primer linea del umbral)
+        
 
         self.desplazamiento_y = 0
         self.desplaz_x = 0
@@ -49,6 +51,8 @@ class UmbralApp:
 
         self.msg = 'Seleccione en forma Vertical'
         self.angulo = 0
+        
+        self.frame_actual = None
         
         self.setup_ui()  # Configurar la interfaz gráfica
         # self.mostrar_pantalla_negra()
@@ -86,9 +90,12 @@ class UmbralApp:
         camera_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
         #! Frame para el Menú
-        self.menu_frame = tk.Frame(self.master, width=200, highlightthickness=2, bg="orange")
-        # self.menu_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.menu_frame = tk.Frame(self.master, highlightthickness=2, bg="orange")
+        self.menu_frame.pack_propagate(False)  # Evitar que el frame se ajuste automáticamente al contenido
         self.menu_frame.pack_forget()  # Ocultar el menú al inicio
+
+        self.menu_frame.configure(height=100) 
+
 
         self.titulo_menu = tk.Label(self.menu_frame, text="Configuración:", font=("Arial", 16), anchor="center", bg="orange")
         self.titulo_menu.pack(pady=5)
@@ -106,6 +113,12 @@ class UmbralApp:
         self.canvas_height = 480
         self.canvas = tk.Canvas(camera_frame, width=self.canvas_width, height=self.canvas_height, bg="black")
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+
+
+        #!!!! Hilo para la captura de frames
+        self.captura_thread = threading.Thread(target=self.capturar_frames, daemon=True)
+        self.captura_thread.start()
 
 
 
@@ -187,6 +200,17 @@ class UmbralApp:
         self.button_update = tk.Button(self.menu_frame, text="OK", command=self.update_values)
         self.button_update.pack()
 
+        # Label y Textbox para primera Linea (Distancia entre Prensa - UMBRAL)
+        self.label_lineaUno = tk.Label(self.menu_frame, text="Linea de Inicio:", bg="lightgray")
+        self.spacing_linea_de_inicio = tk.Entry(self.menu_frame, width=5)
+        self.spacing_linea_de_inicio.insert(0, str(self.linea_de_inicio))
+        self.spacing_linea_de_inicio.pack()
+
+
+
+
+
+
         #! Probando (Label Zoom_Factor)
         self.label_info_ZOOM = tk.Label(control_frame, text=f"x{self.zoom_factor}", bg="lightgray")
         self.label_info_ZOOM.pack()
@@ -226,7 +250,7 @@ class UmbralApp:
         self.master.bind('+', self.zoom_in)          # Evento de zoom in
         self.master.bind('-', self.zoom_out)         # Evento de zoom out
 
-        root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
     
 
 
@@ -354,13 +378,20 @@ class UmbralApp:
 
 
 
-        self.label_scale.place(x=5, y=4)
-        self.scale1.place(x=48, y=5)
+        self.label_scale.place(x=5, y=50)
+        self.scale1.place(x=51, y=51)
         
-        self.label_spacing.place(x=85, y=4)
-        self.spacing1.place(x=132, y=5)
+        self.label_spacing.place(x=94, y=50)
+        self.spacing1.place(x=143, y=51)
+
+        self.label_lineaUno.place(x=186 , y=50)
+        self.spacing_linea_de_inicio.place(x=273 , y=51)
         
-        self.button_update.place(x=175, y=2)
+        self.button_update.place(x=325, y=48)
+
+
+
+
 
         self.label_info_ZOOM.place(x=320, y=4)
 
@@ -401,6 +432,7 @@ class UmbralApp:
         """Actualiza los valores de scale y spacing según la entrada del usuario."""
         self.scale = float(self.scale1.get())
         self.spacing = float(self.spacing1.get())
+        self.linea_de_inicio = float(self.spacing_linea_de_inicio.get())
 
 
     def dibujando_puntos(self, frame):
@@ -482,7 +514,7 @@ class UmbralApp:
             self.menu_frame.pack_forget()  # Ocultar el menú
         else:
             self.menu_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)  # Mostrar el menú
-
+            
 
 
 
@@ -513,121 +545,136 @@ class UmbralApp:
 
 
 
+    def capturar_frames(self):
+        # Este método se ejecuta en un hilo separado para capturar frames continuamente
+        while True:
+            if self.cap is not None:
 
+                ret, frame = self.cap.read()
+                if ret:
+                    self.frame_actual = frame
+                else:
+                    self.frame_actual = None
+            else:
+                print("Error: La cámara no se inicializó correctamente.")
+                # self.capturando = False
+                # break
 
 
 
     def update_frame(self):
         # Actualiza el feed de la cámara continuamente.
-        ret, frame = self.cap.read()
-        if not ret:
+        # ret, frame = self.cap.read()
+        if self.frame_actual is None:
             self.mostrar_pantalla_negra()
             # return 
+        else:
+            frame = self.frame_actual.copy()
+
+            # Redimensionar el frame aplicando el factor de zoom
+            height, width = frame.shape[:2]
+            new_width = int(width * self.zoom_factor)
+            new_height = int(height * self.zoom_factor)
+            frame = cv2.resize(frame, (new_width, new_height))
 
 
-        # Redimensionar el frame aplicando el factor de zoom
-        height, width = frame.shape[:2]
-        new_width = int(width * self.zoom_factor)
-        new_height = int(height * self.zoom_factor)
-        frame = cv2.resize(frame, (new_width, new_height))
+            frame = self.rotar_imagen(frame, self.angulo)
+            self.dibujando_puntos(frame)
 
-
-        frame = self.rotar_imagen(frame, self.angulo)
-        self.dibujando_puntos(frame)
-
-        
-
-        # Convertir el frame a formato compatible con tkinter
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame)
-        imgtk = ImageTk.PhotoImage(image=img)
-
-
-
-
-        #! Ajustar el tamaño del canvas y las barras de desplazamiento
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
-        self.canvas.image = imgtk  # Guardar la referencia
-
-
-        # Limpiar líneas anteriores en el canvas
-        self.canvas.delete("lines")
-
-
-        # Mensaje si se ha seleccionado un solo punto
-        if len(self.points) == 1:
-            cv2.putText(frame, f'{self.msg}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
-            # print("Puntos: ", self.points)
-        
-
-
-        # Dibuja líneas si se han seleccionado dos puntos
-        if len(self.points) == 2:
-            self.boton_arriba['state'] = 'normal'
-            self.boton_abajo['state'] = 'normal'
-            self.boton_izquierda['state'] = 'normal'
-            self.boton_derecha['state'] = 'normal'
-            self.boton_rotar_izquierda['state'] = 'normal'
-            self.boton_rotar_derecha['state'] = 'normal'
             
-            p1, p2 = self.points
-            pixel_distance = np.linalg.norm(np.array(p2) - np.array(p1))    # Distancia en pixeles entre los dos puntos 
-            x_pixel = (self.spacing * pixel_distance) / self.scale          # 3mm convertidos a pixeles
+
+            # Convertir el frame a formato compatible con tkinter
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame)
+            imgtk = ImageTk.PhotoImage(image=img)
+
+
+
+
+            #! Ajustar el tamaño del canvas y las barras de desplazamiento
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
+            self.canvas.image = imgtk  # Guardar la referencia
+
+
+            # Limpiar líneas anteriores en el canvas
+            self.canvas.delete("lines")
+
+
+            # Mensaje si se ha seleccionado un solo punto
+            if len(self.points) == 1:
+                cv2.putText(frame, f'{self.msg}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
+                # print("Puntos: ", self.points)
             
-            #! LINEA EXTRA...!!
-#           10mm -------- pixel_distance
-#           47mm -------- x_pixel(distance)
-
-            x_pixel_1er_linea = (self.linea_de_inicio * pixel_distance) / self.scale
 
 
+            # Dibuja líneas si se han seleccionado dos puntos
+            if len(self.points) == 2:
+                self.boton_arriba['state'] = 'normal'
+                self.boton_abajo['state'] = 'normal'
+                self.boton_izquierda['state'] = 'normal'
+                self.boton_derecha['state'] = 'normal'
+                self.boton_rotar_izquierda['state'] = 'normal'
+                self.boton_rotar_derecha['state'] = 'normal'
+                
+                p1, p2 = self.points
+                pixel_distance = np.linalg.norm(np.array(p2) - np.array(p1))    # Distancia en pixeles entre los dos puntos 
+                x_pixel = (self.spacing * pixel_distance) / self.scale          # 3mm convertidos a pixeles
+                
+                #! LINEA EXTRA...!!
+    #           10mm -------- pixel_distance
+    #           47mm -------- x_pixel(distance)
+
+                x_pixel_1er_linea = (self.linea_de_inicio * pixel_distance) / self.scale
 
 
-            #!Probando
-            canvas_width = self.canvas.winfo_width()
-            canvas_height = self.canvas.winfo_height()
+
+
+                #!Probando
+                canvas_width = self.canvas.winfo_width()
+                canvas_height = self.canvas.winfo_height()
+                
+                centro_x = canvas_width // 2 + self.desplaz_x
+                centro_y = canvas_height // 2 + self.desplazamiento_y
+                
+                # Coordenadas de las líneas
+                primera_linea_start = (0+self.desplaz_x , int(centro_y - (x_pixel // 2) - x_pixel_1er_linea) + self.anguloIzq)
+                primera_linea_end = (canvas_width+self.desplaz_x , int(centro_y - (x_pixel // 2) - x_pixel_1er_linea) + self.anguloDer)
+
+                line1_start = (0 + self.desplaz_x, int(centro_y - x_pixel // 2) + self.anguloIzq)
+                line1_end = (canvas_width + self.desplaz_x, int(centro_y - x_pixel // 2) + self.anguloDer)
+                line2_start = (0 + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloIzq)
+                line2_end = (canvas_width + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloDer)
+
+                centro_vertical_start = (canvas_width // 2, 0)
+                centro_vertical_end = (canvas_width // 2, canvas_height + 300)
+                centro_horizontal_start = (0, canvas_height // 2)
+                centro_horizontal_end = (canvas_width + 300, canvas_height // 2)
+
             
-            centro_x = canvas_width // 2 + self.desplaz_x
-            centro_y = canvas_height // 2 + self.desplazamiento_y
-            
-            # Coordenadas de las líneas
-            primera_linea_start = (0+self.desplaz_x , int(centro_y - (x_pixel // 2) - x_pixel_1er_linea) + self.anguloIzq)
-            primera_linea_end = (canvas_width+self.desplaz_x , int(centro_y - (x_pixel // 2) - x_pixel_1er_linea) + self.anguloDer)
 
-            line1_start = (0 + self.desplaz_x, int(centro_y - x_pixel // 2) + self.anguloIzq)
-            line1_end = (canvas_width + self.desplaz_x, int(centro_y - x_pixel // 2) + self.anguloDer)
-            line2_start = (0 + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloIzq)
-            line2_end = (canvas_width + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloDer)
+                # Dibujar líneas en el canvas
+                self.canvas.create_line(primera_linea_start, primera_linea_end, fill="red", width=3, tags="lines")
 
-            centro_vertical_start = (centro_x, int(centro_y + x_pixel // 3))
-            centro_vertical_end = (centro_x, int(centro_y - x_pixel // 3))
-            centro_horizontal_start = (int(centro_x - canvas_width // 4), centro_y)
-            centro_horizontal_end = (int(centro_x + canvas_width // 4), centro_y)
-
-           
-
-             # Dibujar líneas en el canvas
-            self.canvas.create_line(primera_linea_start, primera_linea_end, fill="red", width=3, tags="lines")
-
-            self.canvas.create_line(line1_start, line1_end, fill="black", width=2, tags="lines")
-            self.canvas.create_line(line2_start, line2_end, fill="black", width=2, tags="lines")
-            self.canvas.create_line(centro_vertical_start, centro_vertical_end, fill="green", width=1, tags="lines")
-            self.canvas.create_line(centro_horizontal_start, centro_horizontal_end, fill="green", width=1, tags="lines")
+                self.canvas.create_line(line1_start, line1_end, fill="black", width=2, tags="lines")
+                self.canvas.create_line(line2_start, line2_end, fill="black", width=2, tags="lines")
+                self.canvas.create_line(centro_vertical_start, centro_vertical_end, fill="green", width=1, tags="lines")
+                self.canvas.create_line(centro_horizontal_start, centro_horizontal_end, fill="green", width=1, tags="lines")
 
 
 
 
 
 
-        # Ajustar el área desplazable del canvas
-        self.canvas.config(scrollregion=self.canvas.bbox(tk.ALL))
+            # Ajustar el área desplazable del canvas
+            self.canvas.config(scrollregion=self.canvas.bbox(tk.ALL))
 
 
 
-        # Llamar nuevamente a update_frame
-        self.master.after(10, self.update_frame)
+            # Llamar nuevamente a update_frame
+            self.master.after(5, self.update_frame)
+            # self.update_frame()
 
-        # self.master.bind("<Motion>", self.mostrar_coordenadas)
+            # self.master.bind("<Motion>", self.mostrar_coordenadas)
 
 
 
