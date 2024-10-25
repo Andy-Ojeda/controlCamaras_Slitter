@@ -8,7 +8,7 @@ import numpy as np
 import tkinter as tk
 from PIL import Image, ImageTk
 import threading
-
+from msg import imprimir_mensaje
 
 
 
@@ -21,13 +21,18 @@ class UmbralApp:
         # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
         # self.ip = "http://192.168.43.172:4747/video"
         self.url = 1
-        # self.ip = "192.168.13.12"
+        self.ip = "192.168.13.12"
         # self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
+
+        self.subTitulo = "Torcha_1"
+
  
-        self.titulo = "AndyO - Slitter, mesa de empalme"
+        self.titulo = "AndyO - Slitter"
 
         self.master = master
         
+        self.mensaje_error = False
+
         # Estado inicial para la cámara
         self.cap = None
         self.reconnect_button = None
@@ -54,6 +59,12 @@ class UmbralApp:
         
         self.frame_actual = None
         
+        self.capturando = True  # Variable de control para detener el hilo
+
+        
+        imprimir_mensaje()
+
+
         self.setup_ui()  # Configurar la interfaz gráfica
         # self.mostrar_pantalla_negra()
 
@@ -80,6 +91,34 @@ class UmbralApp:
         self.master.iconphoto(False, icono)
 
 
+        # Cargar el archivo PNG
+        icon_path1 = "C:/Users/HP/Desktop/Probando Ando/Python/cosas_de_PYTHON/arrow_left.png"
+        icono1 = Image.open(icon_path1)
+        icono1 = icono1.resize((20, 20))  # Ajustar el tamaño si es necesario
+        arrow_left = ImageTk.PhotoImage(icono1)
+
+        # Cargar el archivo PNG
+        icon_path2 = "C:/Users/HP/Desktop/Probando Ando/Python/cosas_de_PYTHON/arrow_right.png"
+        icono2 = Image.open(icon_path2)
+        icono2 = icono2.resize((20, 20))  # Ajustar el tamaño si es necesario
+        arrow_right = ImageTk.PhotoImage(icono2)
+
+        # Cargar el archivo PNG
+        icon_path3 = "C:/Users/HP/Desktop/Probando Ando/Python/cosas_de_PYTHON/rotate-left.png"
+        icono3 = Image.open(icon_path3)
+        icono3 = icono3.resize((20, 20))  # Ajustar el tamaño si es necesario
+        rotate_left = ImageTk.PhotoImage(icono3)
+
+        # Cargar el archivo PNG
+        icon_path4 = "C:/Users/HP/Desktop/Probando Ando/Python/cosas_de_PYTHON/rotate-right.png"
+        icono4 = Image.open(icon_path4)
+        icono4 = icono4.resize((20, 20))  # Ajustar el tamaño si es necesario
+        rotate_right = ImageTk.PhotoImage(icono4)
+
+
+
+
+
         #! Frame para los controles superiores
         control_frame = tk.Frame(self.master, bg="lightgray", height=30)
         control_frame.pack(side=tk.TOP, fill=tk.X)
@@ -97,15 +136,25 @@ class UmbralApp:
         self.menu_frame.configure(height=100) 
 
 
+        #! Crear un Label a la izquierda
+        label = tk.Label(control_frame, text=f"{self.subTitulo}", padx=5, bg="lightgray", font=("Arial", 12))
+        label.pack(side="left", padx=3, pady=2)
+
+
+
         self.titulo_menu = tk.Label(self.menu_frame, text="Configuración:", font=("Arial", 16), anchor="center", bg="orange")
         self.titulo_menu.pack(pady=5)
         
 
+        self.label_ip = tk.Label(self.menu_frame, text=f"IP: {self.ip}", font=("Arial", 10), bg="orange")
+        self.label_ip.pack(pady=2)
+        
+        self.label_ip.place(x=10 , y=10)
+
+
        #! Boton de Menú
         self.menu_button = tk.Button(control_frame, text="☰", command=self.toggle_menu)
         self.menu_button.pack(anchor="ne", padx=3, pady=2)
-        # self.menu_button.place_forget()
-
         
 
         # Crear un canvas para mostrar el feed de la webcam
@@ -141,10 +190,6 @@ class UmbralApp:
 
     
 
-        # #!!!! Botón para imprimir tamaños
-        # self.button_get_sizes = tk.Button(control_frame, text="Obtener tamaños", command=self.get_sizes)
-        # self.button_get_sizes.pack()
-
         #!!!! Botón + de ZOOM
         self.button_zoom_in = tk.Button(control_frame, text="🔎+", command=self.zoom_in)
         self.button_zoom_in.pack()
@@ -164,20 +209,24 @@ class UmbralApp:
         self.boton_abajo['state'] = 'disabled'
 
         #! Botones para MOVER las líneas a la izquierda y derecha
-        self.boton_izquierda = tk.Button(control_frame, text=" ◀ ", command=self.mover_Umbral_izquierda)
+        self.boton_izquierda = tk.Button(control_frame, image=arrow_left, command=self.mover_Umbral_izquierda)
+        self.boton_izquierda.image = arrow_left  
         self.boton_izquierda.pack(side=tk.LEFT)
         self.boton_izquierda['state'] = 'disabled'
         
-        self.boton_derecha = tk.Button(control_frame, text=" ▶ ", command=self.mover_Umbral_derecha)
+        self.boton_derecha = tk.Button(control_frame, image=arrow_right, command=self.mover_Umbral_derecha)
+        self.boton_derecha.image = arrow_right  
         self.boton_derecha.pack(side=tk.LEFT)
         self.boton_derecha['state'] = 'disabled'
 
         #! Botones para ROTAR las líneas a la izquierda y derecha
-        self.boton_rotar_izquierda = tk.Button(control_frame, text=" ↪ ", command=self.rotar_Umbral_izquierda)
+        self.boton_rotar_izquierda = tk.Button(control_frame, image=rotate_left, command=self.rotar_Umbral_izquierda)
+        self.boton_rotar_izquierda.image = rotate_left  
         self.boton_rotar_izquierda.pack(side=tk.LEFT)
         self.boton_rotar_izquierda['state'] = 'disabled'
         
-        self.boton_rotar_derecha = tk.Button(control_frame, text=" ↩ ", command=self.rotar_Umbral_derecha)
+        self.boton_rotar_derecha = tk.Button(control_frame, image=rotate_right, command=self.rotar_Umbral_derecha)
+        self.boton_rotar_derecha.image = rotate_right  
         self.boton_rotar_derecha.pack(side=tk.LEFT)
         self.boton_rotar_derecha['state'] = 'disabled'
 
@@ -207,18 +256,9 @@ class UmbralApp:
         self.spacing_linea_de_inicio.pack()
 
 
-
-
-
-
-        #! Probando (Label Zoom_Factor)
+        #Label Zoom_Factor
         self.label_info_ZOOM = tk.Label(control_frame, text=f"x{self.zoom_factor}", bg="lightgray")
         self.label_info_ZOOM.pack()
-
-
-
-
-
 
 
         # Footer
@@ -228,12 +268,6 @@ class UmbralApp:
         self.label_info_limpiar = tk.Label(self.master, text="Limpiar: (N)", bg="lightgray", font=("Helvetica", 8, "bold"))
         self.label_info_limpiar.pack()  # o place, según tu diseño
 
-        # self.label_info_zoomInOut = tk.Label(self.master, text="ZoomIN-OUT: (+)(-)", bg="lightgray", font=("Helvetica", 8, "bold"))
-        # self.label_info_zoomInOut.pack()  # o place, según tu diseño
-        
-        # self.label_coordenadas = tk.Label(self.master, text="X, Y: (0, 0)", bg="lightgray")
-        # self.label_coordenadas.pack()  # o place según tu diseño
-        
         self.label_punto1 = tk.Label(self.master, text="P1: (0, 0)", bg="lightgray")
         self.label_punto1.pack()  # o place según tu diseño
         
@@ -298,38 +332,28 @@ class UmbralApp:
     def mover_arriba(self):
         # Ajusta el valor de desplazamiento
         self.desplazamiento_y -= 1
-        # self.update_frame()
 
     def mover_abajo(self):
         # Ajusta el valor de desplazamiento
         self.desplazamiento_y += 1
-        # self.update_frame()
 
     def mover_Umbral_izquierda(self):
         # Ajusta el ángulo de rotación
         self.desplaz_x -= 5
-        # self.update_frame()
-        
-
+       
     def mover_Umbral_derecha(self):
         # Ajusta el ángulo de rotación
         self.desplaz_x += 5
-        # self.update_frame()
-        
-
+       
     def rotar_Umbral_izquierda(self):
         # Ajusta el ángulo de rotación
         self.anguloIzq += 1
         self.anguloDer -= 1
-        # self.update_frame()
-        
-
+       
     def rotar_Umbral_derecha(self):
         # Ajusta el ángulo de rotación
         self.anguloIzq -= 1
         self.anguloDer += 1
-        # self.update_frame()
-        
 
 
 
@@ -360,11 +384,8 @@ class UmbralApp:
         canvas_width = self.master.winfo_width()  # Obtener el ancho del root
         canvas_height = self.master.winfo_height()  # Obtener el alto del root
         
-        # label_info_zoomInOut_width = self.label_info_zoomInOut.winfo_width()
-        # label_info_zoomOUT_width = self.label_info_zoomOUT.winfo_width()
         label_info_rotar_width = self.label_info_rotar.winfo_width()
         info_limpiar_width = self.label_info_limpiar.winfo_width()  # Obtener el alto del root
-        # label_coordenadas_width = self.label_coordenadas.winfo_width()
         label_punto1_width = self.label_punto1.winfo_width()
 
         
@@ -414,9 +435,6 @@ class UmbralApp:
         self.label_info_rotar.place(x=8, y=canvas_height - 25)  # Posición inicial
         self.label_info_limpiar.place(x=label_info_rotar_width + 20, y=canvas_height - 25)
 
-        # self.label_info_zoomInOut.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)  # Posición inicial
-        # self.label_coordenadas.place(x=label_info_rotar_width + info_limpiar_width + 20 + 21, y=canvas_height - 25)
-
         self.label_punto1.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)
 
         self.label_punto2.place(x=label_info_rotar_width + info_limpiar_width + label_punto1_width + 20 + 11, y=canvas_height - 25)
@@ -453,12 +471,12 @@ class UmbralApp:
 
     def rotar_izquierda(self, event):
         """Rota la imagen 10 grados a la izquierda."""
-        self.angulo += 2  # Decrementa el ángulo
+        self.angulo += 1  # Decrementa el ángulo
         print(f"Rotando a la izquierda: {self.angulo} grados")
 
     def rotar_derecha(self, event):
         """Rota la imagen 10 grados a la derecha."""
-        self.angulo -= 2  # Incrementa el ángulo
+        self.angulo -= 1  # Incrementa el ángulo
         print(f"Rotando a la derecha: {self.angulo} grados")
 
     # def mostrar_coordenadas(self, event):
@@ -519,35 +537,9 @@ class UmbralApp:
 
 
 
-    # #!!!!! Obtener valores de tamaños
-    # def get_sizes(self):
-    #     """Obtiene los tamaños del root, canvas, y frame y los imprime."""
-    #     # Tamaño del root
-    #     root_width = self.master.winfo_width()
-    #     root_height = self.master.winfo_height()
-    #     print(f"Tamaño del root: {root_width}x{root_height}")
-
-    #     # Tamaño del canvas
-    #     canvas_width = self.canvas.winfo_width()
-    #     canvas_height = self.canvas.winfo_height()
-    #     print(f"Tamaño del canvas: {canvas_width}x{canvas_height}")
-
-    #     # Tamaño del frame (de la cámara)
-    #     ret, frame = self.cap.read()
-    #     if ret:
-    #         frame_height, frame_width = frame.shape[:2]
-    #         print(f"Tamaño del frame: {frame_width}x{frame_height}")
-    #     else:
-    #         print("No se pudo obtener el frame de la cámara.")
-
-
-
-
-
-
     def capturar_frames(self):
         # Este método se ejecuta en un hilo separado para capturar frames continuamente
-        while True:
+        while self.capturando:
             if self.cap is not None:
 
                 ret, frame = self.cap.read()
@@ -556,9 +548,11 @@ class UmbralApp:
                 else:
                     self.frame_actual = None
             else:
-                print("Error: La cámara no se inicializó correctamente.")
-                # self.capturando = False
-                # break
+                if self.mensaje_error == False:
+                    print("Error: La cámara no se inicializó correctamente.")
+                    self.mensaje_error = True
+                    # self.capturando = False
+                    # break
 
 
 
@@ -609,7 +603,7 @@ class UmbralApp:
 
             # Dibuja líneas si se han seleccionado dos puntos
             if len(self.points) == 2:
-                self.boton_arriba['state'] = 'normal'
+                self.boton_arriba['state'] = 'normal'           # Enabled button
                 self.boton_abajo['state'] = 'normal'
                 self.boton_izquierda['state'] = 'normal'
                 self.boton_derecha['state'] = 'normal'
@@ -645,20 +639,32 @@ class UmbralApp:
                 line2_start = (0 + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloIzq)
                 line2_end = (canvas_width + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloDer)
 
-                centro_vertical_start = (canvas_width // 2, 0)
-                centro_vertical_end = (canvas_width // 2, canvas_height + 300)
-                centro_horizontal_start = (0, canvas_height // 2)
-                centro_horizontal_end = (canvas_width + 300, canvas_height // 2)
+                # centro_vertical_start = (canvas_width // 2, 0)
+                # centro_vertical_end = (canvas_width // 2, canvas_height + 300)
+                # centro_horizontal_start = (0, canvas_height // 2)
+                # centro_horizontal_end = (canvas_width + 300, canvas_height // 2)
 
+
+                #!Probando con frame
+                frame_height, frame_width = frame.shape[:2]
+                # print(f"Tamaño del frame: {frame_width}x{frame_height}")
+
+                centro_vertical_start = (frame_width // 2, 0)
+                centro_vertical_end = (frame_width // 2, frame_height)
+                centro_horizontal_start = (0, frame_height // 2)
+                centro_horizontal_end = (frame_width, frame_height // 2)
             
+
+
+
 
                 # Dibujar líneas en el canvas
                 self.canvas.create_line(primera_linea_start, primera_linea_end, fill="red", width=3, tags="lines")
 
                 self.canvas.create_line(line1_start, line1_end, fill="black", width=2, tags="lines")
                 self.canvas.create_line(line2_start, line2_end, fill="black", width=2, tags="lines")
-                self.canvas.create_line(centro_vertical_start, centro_vertical_end, fill="green", width=1, tags="lines")
-                self.canvas.create_line(centro_horizontal_start, centro_horizontal_end, fill="green", width=1, tags="lines")
+                self.canvas.create_line(centro_vertical_start, centro_vertical_end, fill="green", width=2, tags="lines")
+                self.canvas.create_line(centro_horizontal_start, centro_horizontal_end, fill="green", width=2, tags="lines")
 
 
 
@@ -680,6 +686,8 @@ class UmbralApp:
 
 
     def on_closing(self):
+        # Detener la captura y liberar la cámara al cerrar la aplicación
+        self.capturando = False  # Detener el hilo de captura
         if self.cap is not None:
             self.cap.release()
         self.master.destroy()
