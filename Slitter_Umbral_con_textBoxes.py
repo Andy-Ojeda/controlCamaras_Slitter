@@ -367,6 +367,8 @@ class UmbralApp:
         self.label_punto1.config(text="P1: (0, 0)")  # Limpiar el label del punto 1
         self.label_punto2.config(text="P2: (0, 0)")  # Limpiar el label del punto 2
     
+        self.label_punto1.config(bg="lightgrey")
+        self.label_punto2.config(bg="lightgrey")
         
         self.boton_arriba['state'] = 'disabled'
         self.boton_abajo['state'] = 'disabled'
@@ -453,11 +455,11 @@ class UmbralApp:
         self.linea_de_inicio = float(self.spacing_linea_de_inicio.get())
 
 
-    def dibujando_puntos(self, frame):
-        """Dibuja los puntos seleccionados en el frame."""
-        if len(self.points) > 0:
-            for x, y in self.points:
-                cv2.circle(frame, (x, y), 3, (0, 255, 0), 1)
+    # def dibujando_puntos(self, frame):
+    #     """Dibuja los puntos seleccionados en el frame."""
+    #     if len(self.points) > 0:
+    #         for x, y in self.points:
+    #             cv2.circle(frame, (x, y), 3, (0, 255, 0), 1)
 
     def rotar_imagen(self, frame, angulo):
         """Rota la imagen según el ángulo dado."""
@@ -573,7 +575,8 @@ class UmbralApp:
 
 
             frame = self.rotar_imagen(frame, self.angulo)
-            self.dibujando_puntos(frame)
+
+            # self.dibujando_puntos(frame)
 
             
 
@@ -596,13 +599,15 @@ class UmbralApp:
 
             # Mensaje si se ha seleccionado un solo punto
             if len(self.points) == 1:
-                cv2.putText(frame, f'{self.msg}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
+                cv2.putText(frame, f'{self.msg}', (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255), 2)
                 # print("Puntos: ", self.points)
-            
+                self.label_punto1.config(bg="lightgreen")
 
 
             # Dibuja líneas si se han seleccionado dos puntos
             if len(self.points) == 2:
+                self.label_punto2.config(bg="lightgreen")
+
                 self.boton_arriba['state'] = 'normal'           # Enabled button
                 self.boton_abajo['state'] = 'normal'
                 self.boton_izquierda['state'] = 'normal'
