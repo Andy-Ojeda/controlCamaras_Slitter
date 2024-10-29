@@ -10,24 +10,26 @@ from PIL import Image, ImageTk
 import threading
 from msg import imprimir_mensaje
 import os
+import json
 
 
 class UmbralApp:
 
     def __init__(self, master):
 
+        
+        self.base_path = "C:/Royo/Slitter/Torchas"
 
         # Dirección IP de la cámara
         # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
         # self.ip = "http://192.168.43.172:4747/video"
-        self.url = 1
-        # self.ip = "192.168.13.13"       # Torcha 1
-        self.ip = "192.168.13.12"       # Torcha 2
-        # self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
+        # self.url = 1
+        # self.ip = 1
+        self.ip = "192.168.13.13"       # Torcha 1
+        # self.ip = "192.168.13.12"       # Torcha 2
+
 
         self.subTitulo = "Torcha_2"
-
- 
         self.titulo = "AndyO - Slitter"
 
         self.master = master
@@ -83,42 +85,22 @@ class UmbralApp:
 
 
     def setup_ui(self):
+        # self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
+        self.url = 1
+        self.cargar_datos()
         """Configura la interfaz gráfica de la aplicación."""
+
         self.master.title(self.titulo)
 
         # Cambiar el ícono de la ventana
-        # logo_path = "C:/Users/HP/Desktop/Probando Ando/Python/cosas_de_PYTHON/AndyO.ico" 
-        current_dir = os.path.dirname(__file__)
-        
-        logo_path = os.path.join(current_dir, '..', 'AndyO.ico')
+        logo_path = os.path.join(self.base_path, 'AndyO.ico')
         icono = ImageTk.PhotoImage(file=logo_path)
         self.master.iconphoto(False, icono)
 
-
-        # Cargar el archivo PNG
-        icon_path1 = os.path.join(current_dir, '..', 'arrow_left.png')
-        icono1 = Image.open(icon_path1)
-        icono1 = icono1.resize((20, 20))  # Ajustar el tamaño si es necesario
-        arrow_left = ImageTk.PhotoImage(icono1)
-
-        # Cargar el archivo PNG
-        icon_path2 = os.path.join(current_dir, '..', 'arrow_right.png')
-        icono2 = Image.open(icon_path2)
-        icono2 = icono2.resize((20, 20))  # Ajustar el tamaño si es necesario
-        arrow_right = ImageTk.PhotoImage(icono2)
-
-        # Cargar el archivo PNG
-        icon_path3 = os.path.join(current_dir, '..', 'rotate-left.png')
-        icono3 = Image.open(icon_path3)
-        icono3 = icono3.resize((20, 20))  # Ajustar el tamaño si es necesario
-        rotate_left = ImageTk.PhotoImage(icono3)
-
-        # Cargar el archivo PNG
-        icon_path4 = os.path.join(current_dir, '..', 'rotate-right.png')
-        icono4 = Image.open(icon_path4)
-        icono4 = icono4.resize((20, 20))  # Ajustar el tamaño si es necesario
-        rotate_right = ImageTk.PhotoImage(icono4)
-
+        arrow_left = self.cargar_imagen('arrow_left.png')
+        arrow_right = self.cargar_imagen('arrow_right.png')
+        rotate_left = self.cargar_imagen('rotate-left.png')
+        rotate_right = self.cargar_imagen('rotate-right.png')
 
 
 
@@ -152,8 +134,12 @@ class UmbralApp:
 
         self.label_ip = tk.Label(self.menu_frame, text=f"IP: {self.ip}", font=("Arial", 10), bg="orange")
         self.label_ip.pack(pady=2)
-        
         self.label_ip.place(x=10 , y=10)
+
+        guardar_button = tk.Button(self.menu_frame, text="Guardar", command=self.guardar_datos)
+        guardar_button.pack()
+        guardar_button.place(x=150 , y=10)
+
 
 
        #! Boton de Menú
@@ -194,16 +180,16 @@ class UmbralApp:
 
     
 
-        #!!!! Botón + de ZOOM
+        # Botón + de ZOOM
         self.button_zoom_in = tk.Button(control_frame, text="🔎+", command=self.zoom_in)
         self.button_zoom_in.pack()
-        #!!!! Botón - de ZOOM
+        # Botón - de ZOOM
         self.button_zoom_out = tk.Button(control_frame, text="🔎-", command=self.zoom_out)
         self.button_zoom_out.pack()
 
 
 
-        #! Botones para mover las líneas hacia arriba y abajo
+        # Botones para mover las líneas hacia arriba y abajo
         self.boton_arriba = tk.Button(control_frame, text="🔺", command=self.mover_arriba)
         self.boton_arriba.pack(side=tk.LEFT)
         self.boton_arriba['state'] = 'disabled'
@@ -212,7 +198,7 @@ class UmbralApp:
         self.boton_abajo.pack(side=tk.LEFT)
         self.boton_abajo['state'] = 'disabled'
 
-        #! Botones para MOVER las líneas a la izquierda y derecha
+        # Botones para MOVER las líneas a la izquierda y derecha
         self.boton_izquierda = tk.Button(control_frame, image=arrow_left, command=self.mover_Umbral_izquierda)
         self.boton_izquierda.image = arrow_left  
         self.boton_izquierda.pack(side=tk.LEFT)
@@ -223,7 +209,7 @@ class UmbralApp:
         self.boton_derecha.pack(side=tk.LEFT)
         self.boton_derecha['state'] = 'disabled'
 
-        #! Botones para ROTAR las líneas a la izquierda y derecha
+        # Botones para ROTAR las líneas a la izquierda y derecha
         self.boton_rotar_izquierda = tk.Button(control_frame, image=rotate_left, command=self.rotar_Umbral_izquierda)
         self.boton_rotar_izquierda.image = rotate_left  
         self.boton_rotar_izquierda.pack(side=tk.LEFT)
@@ -233,9 +219,6 @@ class UmbralApp:
         self.boton_rotar_derecha.image = rotate_right  
         self.boton_rotar_derecha.pack(side=tk.LEFT)
         self.boton_rotar_derecha['state'] = 'disabled'
-
-
-
 
         # Label y Textbox para scale (tamaño del PATRÓN)
         self.label_scale = tk.Label(self.menu_frame, text="Patrón:", bg="lightgray")
@@ -259,11 +242,9 @@ class UmbralApp:
         self.spacing_linea_de_inicio.insert(0, str(self.linea_de_inicio))
         self.spacing_linea_de_inicio.pack()
 
-
         #Label Zoom_Factor
         self.label_info_ZOOM = tk.Label(control_frame, text=f"x{self.zoom_factor}", bg="lightgray")
         self.label_info_ZOOM.pack()
-
 
         # Footer
         self.label_info_rotar = tk.Label(self.master, text="Rotar: (L) (R)", bg="lightgray", font=("Helvetica", 8, "bold"))
@@ -290,6 +271,56 @@ class UmbralApp:
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
     
+
+
+
+    
+    def guardar_datos(self):
+        # Crear un diccionario con los datos que deseas guardar
+        datos = {
+            "titulo": self.titulo,
+            "subtitulo": self.subTitulo,
+            "ip": self.ip,
+            "patron": self.scale,
+            "umbral": self.spacing,
+            "distancia_inicial": self.linea_de_inicio 
+        }
+        
+        try:
+            ruta_archivo = os.path.join(self.base_path, 'configuracion.json')
+            with open(ruta_archivo, 'w') as archivo:
+                json.dump(datos, archivo, indent=4)
+            print(f"Datos guardados exitosamente en {ruta_archivo}.")
+        except Exception as e:
+            print(f"Error al guardar los datos: {e}")
+
+
+    def cargar_datos(self):
+        try:
+            # Leer los datos desde el archivo de texto
+            ruta_archivo = os.path.join(self.base_path, 'configuracion.json')
+            with open(ruta_archivo, 'r') as archivo:
+                datos = json.load(archivo)
+            
+            self.ip = datos.get("ip", "192.168.13.1")
+            self.titulo = datos.get("titulo", "AndyO - Slitter")
+            self.subTitulo = datos.get("subtitulo", "Torcha")
+            self.scale = datos.get("patron", 10.0) 
+            self.spacing = datos.get("umbral", 3.0)
+            self.linea_de_inicio = datos.get("distancia_inicial", 47.0) 
+
+
+            print("Datos cargados exitosamente.")
+        except FileNotFoundError:
+            print("Archivo de configuración no encontrado. Usando valores predeterminados.")
+
+
+    def cargar_imagen(self, filename, size=(20, 20)):
+        path = os.path.join(self.base_path, filename)
+        image = Image.open(path)
+        return ImageTk.PhotoImage(image.resize(size))
+
+
 
 
     #! Probando ----------------------------------
@@ -324,13 +355,6 @@ class UmbralApp:
         print("Reconectando cámara...3")  # Para depuración
     
         # self.reconnect_button = None
-
-
-
-
-
-
-
 
 
     def mover_arriba(self):
@@ -394,17 +418,6 @@ class UmbralApp:
         info_limpiar_width = self.label_info_limpiar.winfo_width()  # Obtener el alto del root
         label_punto1_width = self.label_punto1.winfo_width()
 
-        
-
-
-
-        #? PROBANDO BOTÓN ZOOM
-        button_zoom_in_height = self.button_zoom_in.winfo_height()    # Ancho de botón zoom_in
-        button_zoom_out_height = self.button_zoom_out.winfo_height()    # Ancho de botón zoom_in
-
-
-
-
         self.label_scale.place(x=5, y=50)
         self.scale1.place(x=51, y=51)
         
@@ -416,13 +429,9 @@ class UmbralApp:
         
         self.button_update.place(x=325, y=48)
 
-
-
-
-
         self.label_info_ZOOM.place(x=320, y=4)
 
-        #? PROBANDO BOTÓN ZOOM
+        # PROBANDO BOTÓN ZOOM
         self.button_zoom_in.place(x=250, y=2)
         self.button_zoom_out.place(x=283, y=2)
 
@@ -434,22 +443,13 @@ class UmbralApp:
         self.boton_rotar_derecha.place(x=538, y=2)
         
 
-        #!!!!!!!!!!!! Probando
+        # Probando
         self.h_scrollbar.place(x=canvas_width - 80, y=canvas_height - 23)
-
 
         self.label_info_rotar.place(x=8, y=canvas_height - 25)  # Posición inicial
         self.label_info_limpiar.place(x=label_info_rotar_width + 20, y=canvas_height - 25)
-
         self.label_punto1.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)
-
         self.label_punto2.place(x=label_info_rotar_width + info_limpiar_width + label_punto1_width + 20 + 11, y=canvas_height - 25)
-        
-        
-        
-
-
-
         
 
     def update_values(self):
@@ -592,7 +592,7 @@ class UmbralApp:
 
 
 
-            #! Ajustar el tamaño del canvas y las barras de desplazamiento
+            # Ajustar el tamaño del canvas y las barras de desplazamiento
             self.canvas.create_image(0, 0, anchor=tk.NW, image=imgtk)
             self.canvas.image = imgtk  # Guardar la referencia
 
@@ -630,9 +630,7 @@ class UmbralApp:
                 x_pixel_1er_linea = (self.linea_de_inicio * pixel_distance) / self.scale
 
 
-
-
-                #!Probando
+                #Probando
                 canvas_width = self.canvas.winfo_width()
                 canvas_height = self.canvas.winfo_height()
                 
@@ -648,13 +646,8 @@ class UmbralApp:
                 line2_start = (0 + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloIzq)
                 line2_end = (canvas_width + self.desplaz_x, int(centro_y + x_pixel // 2) + self.anguloDer)
 
-                # centro_vertical_start = (canvas_width // 2, 0)
-                # centro_vertical_end = (canvas_width // 2, canvas_height + 300)
-                # centro_horizontal_start = (0, canvas_height // 2)
-                # centro_horizontal_end = (canvas_width + 300, canvas_height // 2)
 
-
-                #!Probando con frame
+                #Probando con frame
                 frame_height, frame_width = frame.shape[:2]
                 # print(f"Tamaño del frame: {frame_width}x{frame_height}")
 
