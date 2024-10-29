@@ -1,18 +1,25 @@
 import cv2
-import numpy as np
 import tkinter as tk
 from PIL import Image, ImageTk
 from msg import imprimir_mensaje
 import os
+import json
+import sys
+
+base_path = "C:/Royo/Slitter/In_Out"
 
 
+# Variables globales
+distancia_UP = 0
+distancia_DOWN = 0
 
+centro_UP_ajuste = 0
+centro_DOWN_ajuste = 0
 
-imprimir_mensaje()
+valor_Y_UP = 0
+valor_Y_DOWN = 0
 
-
-
-
+titulo = "AndyO - Slitter"
 subTitulo = "Entrada de chapa"
 
 # Iniciar la captura de la cámara
@@ -26,18 +33,80 @@ cap.set(3, 800)
 cap.set(4, 600)
 
 
-# Variables globales
-distancia_UP = 146
-distancia_DOWN = 148
-
-centro_UP_ajuste = -25
-centro_DOWN_ajuste = 25
-
-valor_Y_UP = 25
-valor_Y_DOWN = 550
-
 canvas_w = 0
 canvas_h = 0
+
+
+def resource_path(relative_path):
+    """Obtiene la ruta absoluta del recurso, para desarrollo o ejecutable."""
+    # Para la versión empaquetada, usamos _MEIPASS
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    # Para el modo de desarrollo, usa la ruta actual
+    return os.path.join(os.path.abspath("."), relative_path)
+
+def get_config_path():
+    """Obtiene la ruta del archivo de configuración."""
+    return resource_path('configuracion.json')
+
+
+def guardar_datos():
+    # Crear un diccionario con los datos que deseas guardar
+    datos = {
+        'titulo': titulo,
+        'subtitulo': subTitulo,
+        'ip': ip,
+        
+        'distancia_UP': distancia_UP,
+        'distancia_DOWN': distancia_DOWN,
+        'centro_UP_ajuste': centro_UP_ajuste,
+        'centro_DOWN_ajuste': centro_DOWN_ajuste,
+        'valor_Y_UP': valor_Y_UP,
+        'valor_Y_DOWN': valor_Y_DOWN
+    }
+    
+    try:
+        # Guardar los datos en un archivo de texto (usando JSON para formateo sencillo)
+        ruta_archivo = os.path.join(base_path, 'configuracion.json')
+        with open(ruta_archivo, 'w') as archivo:
+            json.dump(datos, archivo, indent=4)
+        print(f"Datos guardados exitosamente en {ruta_archivo}.")
+    except Exception as e:
+        print(f"Error al guardar los datos: {e}")
+
+def cargar_datos():
+    global distancia_UP, distancia_DOWN, centro_UP_ajuste, centro_DOWN_ajuste, valor_Y_UP, valor_Y_DOWN, ip, titulo, subTitulo
+
+    try:
+        # Leer los datos desde el archivo de texto
+        ruta_archivo = os.path.join(base_path, 'configuracion.json')
+        with open(ruta_archivo, 'r') as archivo:
+            datos = json.load(archivo)
+        
+        # Asignar los valores a las variables correspondientes
+        ip = datos.get("ip", "192.168.13.14")
+        titulo = datos.get("titulo", "AndyO - ")
+        subTitulo = datos.get("subtitulo", "Entrada / Salida")
+        
+        distancia_UP = datos.get("distancia_UP", 140)
+        distancia_DOWN = datos.get("distancia_DOWN", 148)
+        centro_UP_ajuste = datos.get("centro_UP_ajuste", -25)
+        centro_DOWN_ajuste = datos.get("centro_DOWN_ajuste", 25)
+        valor_Y_UP = datos.get("valor_Y_UP", 25)
+        valor_Y_DOWN = datos.get("valor_Y_DOWN", 550)
+
+        print("Datos cargados exitosamente.")
+    except FileNotFoundError:
+        print("Archivo de configuración no encontrado. Usando valores predeterminados.")
+    except json.JSONDecodeError:
+        print("Error al decodificar el archivo JSON. Usando valores predeterminados.")
+
+
+
+imprimir_mensaje()
+cargar_datos()
+
+
 
 # Función para actualizar las dimensiones del canvas al cargar la ventana
 # def on_load():
@@ -70,7 +139,6 @@ def toggle_menu(event=None):
     else:
         menu_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=False)  # Mostrar el menú
             
-
 
 
 
@@ -177,10 +245,11 @@ titulo_menu.pack(pady=5)
 # Crear un Label a la izquierda
 label_ip = tk.Label(menu_frame, text=f"IP: {ip}", font=("Arial", 10), bg="orange")
 label_ip.pack(pady=2)
-
 label_ip.place(x=10 , y=10)
 
-
+guardar_button = tk.Button(menu_frame, text="Guardar", command=guardar_datos)
+guardar_button.pack()
+guardar_button.place(x=150 , y=10)
 
 # # Crear un canvas para mostrar el feed de la webcam
 # canvas_width = 640
@@ -255,12 +324,17 @@ button_update_y.place(x=380, y=100)
 
 
 
-root.title("AndyO - Slitter, Guia de centrado")
-# logo_path = "C:/Users/HP/Desktop/Probando Ando/Python/cosas_de_PYTHON/AndyO.ico" 
-current_dir = os.path.dirname(__file__)
-logo_path = os.path.join(current_dir, '..', 'AndyO.ico')
+root.title(titulo)
+
+# current_dir = os.path.dirname(__file__)
+# logo_path = os.path.join(current_dir, '..', 'AndyO.ico')
+# icono = ImageTk.PhotoImage(file=logo_path)
+# root.iconphoto(False, icono)
+logo_path = os.path.join(base_path, 'AndyO.ico')
 icono = ImageTk.PhotoImage(file=logo_path)
 root.iconphoto(False, icono)
+
+
 
 
 update_frame()
