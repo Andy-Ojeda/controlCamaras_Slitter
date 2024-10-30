@@ -11,13 +11,13 @@ import threading
 from msg import imprimir_mensaje
 import os
 import json
+import ctypes
 
 
 class UmbralApp:
 
     def __init__(self, master):
 
-        
         self.base_path = "C:/Royo/Slitter/Torchas"
 
         # Dirección IP de la cámara
@@ -34,6 +34,13 @@ class UmbralApp:
 
         self.master = master
         
+
+
+        # Minimizar la ventana al iniciar
+        self.master.iconify()
+
+
+
         self.mensaje_error = False
 
         # Estado inicial para la cámara
@@ -44,7 +51,7 @@ class UmbralApp:
         self.scale = 10.0               # 10mm (PATRÓN DE MEDICIÓN)
         self.spacing = 3.0              # 3mm (TAMAÑO DEL UMBRAL)
         self.linea_de_inicio = 47.0     # 47mm (Distancia desde prensa a primer linea del umbral)
-        
+        self.correccion_centro = 0
 
         self.desplazamiento_y = 0
         self.desplaz_x = 0
@@ -65,7 +72,27 @@ class UmbralApp:
         self.capturando = True  # Variable de control para detener el hilo
 
         
-        imprimir_mensaje()
+
+        self.archivo_Torcha = ""
+        
+        self.seleccion_Torcha = imprimir_mensaje()
+        # print("Variable: ", self.seleccion_Torcha)
+
+        if self.seleccion_Torcha is not "":
+            self.master.deiconify()
+            print("Cargando configuraciones...")
+
+        if self.seleccion_Torcha == "T1":
+            self.archivo_Torcha = "C:/Royo/Slitter/Torchas/configuracion_T1.json"
+            print("Cargando configuración de Torcha_1")
+        
+        if self.seleccion_Torcha == "T2":
+            self.archivo_Torcha = "C:/Royo/Slitter/Torchas/configuracion_T2.json"
+            print("Cargando configuración de Torcha_2")
+        
+
+
+
 
 
         self.setup_ui()  # Configurar la interfaz gráfica
@@ -85,9 +112,9 @@ class UmbralApp:
 
 
     def setup_ui(self):
-        # self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
-        self.url = 1
         self.cargar_datos()
+        self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
+        # self.url = 1
         """Configura la interfaz gráfica de la aplicación."""
 
         self.master.title(self.titulo)
@@ -236,6 +263,18 @@ class UmbralApp:
         self.button_update = tk.Button(self.menu_frame, text="OK", command=self.update_values)
         self.button_update.pack()
 
+
+        # Labels de correccion_centro (Informa sobre la correccion que se le hace a la linea central)
+        self.label_correccion_centro = tk.Label(self.menu_frame, text="Correccion_centro Vertival:", bg="orange")
+        self.label_correccion_centro_num = tk.Label(self.menu_frame, text=self.correccion_centro, bg="orange")
+        
+        
+
+
+
+
+
+
         # Label y Textbox para primera Linea (Distancia entre Prensa - UMBRAL)
         self.label_lineaUno = tk.Label(self.menu_frame, text="Linea de Inicio:", bg="lightgray")
         self.spacing_linea_de_inicio = tk.Entry(self.menu_frame, width=5)
@@ -247,11 +286,21 @@ class UmbralApp:
         self.label_info_ZOOM.pack()
 
         # Footer
-        self.label_info_rotar = tk.Label(self.master, text="Rotar: (L) (R)", bg="lightgray", font=("Helvetica", 8, "bold"))
+        self.label_info_rotar = tk.Label(self.master, text="Rotar: ", bg="lightgray", font=("Helvetica", 8, "bold"))
         self.label_info_rotar.pack()
+        self.label_info_rotar1 = tk.Label(self.master, text="(L)", bg="lightgray", font=("Helvetica", 8, "bold"))
+        self.label_info_rotar1.pack()
+        self.label_info_rotar1.bind("<Button-1>", self.rotar_izquierda)
+        self.label_info_rotar1.config(cursor="hand2")
+        self.label_info_rotar2 = tk.Label(self.master, text="(R)", bg="lightgray", font=("Helvetica", 8, "bold"))
+        self.label_info_rotar2.pack()
+        self.label_info_rotar2.bind("<Button-1>", self.rotar_derecha)
+        self.label_info_rotar2.config(cursor="hand2")
 
         self.label_info_limpiar = tk.Label(self.master, text="Limpiar: (N)", bg="lightgray", font=("Helvetica", 8, "bold"))
-        self.label_info_limpiar.pack()  # o place, según tu diseño
+        self.label_info_limpiar.pack()  
+        self.label_info_limpiar.bind("<Button-1>", self.borrar_puntos)
+        self.label_info_limpiar.config(cursor="hand2")  # Cambia el cursor a mano
 
         self.label_punto1 = tk.Label(self.master, text="P1: (0, 0)", bg="lightgray")
         self.label_punto1.pack()  # o place según tu diseño
@@ -287,7 +336,7 @@ class UmbralApp:
         }
         
         try:
-            ruta_archivo = os.path.join(self.base_path, 'configuracion.json')
+            ruta_archivo = os.path.join(self.archivo_Torcha)
             with open(ruta_archivo, 'w') as archivo:
                 json.dump(datos, archivo, indent=4)
             print(f"Datos guardados exitosamente en {ruta_archivo}.")
@@ -298,16 +347,20 @@ class UmbralApp:
     def cargar_datos(self):
         try:
             # Leer los datos desde el archivo de texto
-            ruta_archivo = os.path.join(self.base_path, 'configuracion.json')
+            print("Archivo a cargar: ", self.archivo_Torcha)
+            ruta_archivo = os.path.join(self.archivo_Torcha)
             with open(ruta_archivo, 'r') as archivo:
                 datos = json.load(archivo)
             
             self.ip = datos.get("ip", "192.168.13.1")
+            print("IP: ", self.ip)
             self.titulo = datos.get("titulo", "AndyO - Slitter")
             self.subTitulo = datos.get("subtitulo", "Torcha")
             self.scale = datos.get("patron", 10.0) 
             self.spacing = datos.get("umbral", 3.0)
             self.linea_de_inicio = datos.get("distancia_inicial", 47.0) 
+
+            self.correccion_centro = datos.get("correccion_centro", 0)
 
 
             print("Datos cargados exitosamente.")
@@ -414,7 +467,7 @@ class UmbralApp:
         canvas_width = self.master.winfo_width()  # Obtener el ancho del root
         canvas_height = self.master.winfo_height()  # Obtener el alto del root
         
-        label_info_rotar_width = self.label_info_rotar.winfo_width()
+        label_info_rotar_width2 = self.label_info_rotar.winfo_width()
         info_limpiar_width = self.label_info_limpiar.winfo_width()  # Obtener el alto del root
         label_punto1_width = self.label_punto1.winfo_width()
 
@@ -428,6 +481,14 @@ class UmbralApp:
         self.spacing_linea_de_inicio.place(x=273 , y=51)
         
         self.button_update.place(x=325, y=48)
+
+        self.label_correccion_centro.place(x=5, y=75)
+        self.label_correccion_centro_num.place(x=154, y=75)
+
+
+
+
+
 
         self.label_info_ZOOM.place(x=320, y=4)
 
@@ -447,9 +508,11 @@ class UmbralApp:
         self.h_scrollbar.place(x=canvas_width - 80, y=canvas_height - 23)
 
         self.label_info_rotar.place(x=8, y=canvas_height - 25)  # Posición inicial
-        self.label_info_limpiar.place(x=label_info_rotar_width + 20, y=canvas_height - 25)
-        self.label_punto1.place(x=label_info_rotar_width + info_limpiar_width + 20 + 11, y=canvas_height - 25)
-        self.label_punto2.place(x=label_info_rotar_width + info_limpiar_width + label_punto1_width + 20 + 11, y=canvas_height - 25)
+        self.label_info_rotar1.place(x=45, y=canvas_height - 25)  # Posición inicial
+        self.label_info_rotar2.place(x=65, y=canvas_height - 25)  # Posición inicial
+        self.label_info_limpiar.place(x=label_info_rotar_width2 + 56, y=canvas_height - 25)
+        self.label_punto1.place(x=label_info_rotar_width2 + info_limpiar_width + 56 + 11, y=canvas_height - 25)
+        self.label_punto2.place(x=label_info_rotar_width2 + info_limpiar_width + label_punto1_width + 56 + 11, y=canvas_height - 25)
         
 
     def update_values(self):
@@ -477,12 +540,12 @@ class UmbralApp:
 
     def rotar_izquierda(self, event):
         """Rota la imagen 10 grados a la izquierda."""
-        self.angulo += 1  # Decrementa el ángulo
+        self.angulo += 0.5  # Decrementa el ángulo
         print(f"Rotando a la izquierda: {self.angulo} grados")
 
     def rotar_derecha(self, event):
         """Rota la imagen 10 grados a la derecha."""
-        self.angulo -= 1  # Incrementa el ángulo
+        self.angulo -= 0.5  # Incrementa el ángulo
         print(f"Rotando a la derecha: {self.angulo} grados")
 
     # def mostrar_coordenadas(self, event):
@@ -491,7 +554,7 @@ class UmbralApp:
 
     def clics(self, event):
         # Verifica si el widget que disparó el evento no es un Button o Entry o ScrollBar
-        if isinstance(event.widget, (tk.Button, tk.Entry, tk.Scrollbar)):
+        if isinstance(event.widget, (tk.Button, tk.Entry, tk.Scrollbar, tk.Label)):
             return  # Si es un botón o entrada de texto, no hacer nada
         
 
@@ -651,8 +714,8 @@ class UmbralApp:
                 frame_height, frame_width = frame.shape[:2]
                 # print(f"Tamaño del frame: {frame_width}x{frame_height}")
 
-                centro_vertical_start = (frame_width // 2, 0)
-                centro_vertical_end = (frame_width // 2, frame_height)
+                centro_vertical_start = ((frame_width // 2)+self.correccion_centro , 0)
+                centro_vertical_end = ((frame_width // 2)+self.correccion_centro , frame_height)
                 centro_horizontal_start = (0, frame_height // 2)
                 centro_horizontal_end = (frame_width, frame_height // 2)
             
