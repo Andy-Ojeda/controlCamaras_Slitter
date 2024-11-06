@@ -20,7 +20,7 @@ valor_Y_UP = 0
 valor_Y_DOWN = 0
 
 titulo = "AndyO - Slitter"
-subTitulo = "Entrada de chapa"
+subTitulo = "Entrada / Salida"
 
 # Iniciar la captura de la cámara
 url = 1
@@ -28,13 +28,37 @@ ip = "192.168.13.14"  # Camara de Guillotina
 # ip = "192.168.13.11"    # Camara de Cuchillas
 # url = f"rtsp://admin:Royo12345@{ip}:80/cam/realmonitor?channel=1&subtype=1"
 
-cap = cv2.VideoCapture(url)
-cap.set(3, 800)
-cap.set(4, 600)
+
 
 
 canvas_w = 0
 canvas_h = 0
+
+
+
+
+
+
+
+
+
+
+def maximizar(event=None):
+    root.state('zoomed')
+
+def restaurar(event=None):
+    root.state('normal')  
+
+def mitadPantallaDerecha(event=None):
+    root.geometry('%dx%d+%d+%d' % (root.winfo_screenwidth()/2, root.winfo_screenheight(), root.winfo_screenwidth()/2, 0))
+
+def mitadPantallaIzquierda(event=None):
+    root.geometry('%dx%d+%d+%d' % (root.winfo_screenwidth()/2, root.winfo_screenheight(), 0, 0))
+
+
+
+
+
 
 
 def resource_path(relative_path):
@@ -67,10 +91,11 @@ def guardar_datos():
     
     try:
         # Guardar los datos en un archivo de texto (usando JSON para formateo sencillo)
-        ruta_archivo = os.path.join(base_path, 'configuracion.json')
+        # ruta_archivo = os.path.join(base_path, 'configuracion.json')
+        ruta_archivo = os.path.join(archivo_in_out)
         with open(ruta_archivo, 'w') as archivo:
             json.dump(datos, archivo, indent=4)
-        print(f"Datos guardados exitosamente en {ruta_archivo}.")
+        print(f"Datos guardados exitosamente en {archivo_in_out}.")
     except Exception as e:
         print(f"Error al guardar los datos: {e}")
 
@@ -79,12 +104,13 @@ def cargar_datos():
 
     try:
         # Leer los datos desde el archivo de texto
-        ruta_archivo = os.path.join(base_path, 'configuracion.json')
+        # ruta_archivo = os.path.join(base_path, 'configuracion.json')
+        ruta_archivo = os.path.join(archivo_in_out)
         with open(ruta_archivo, 'r') as archivo:
             datos = json.load(archivo)
         
         # Asignar los valores a las variables correspondientes
-        ip = datos.get("ip", "192.168.13.14")
+        ip = datos.get("ip", "192.168.13.1")
         titulo = datos.get("titulo", "AndyO - ")
         subTitulo = datos.get("subtitulo", "Entrada / Salida")
         
@@ -102,9 +128,6 @@ def cargar_datos():
         print("Error al decodificar el archivo JSON. Usando valores predeterminados.")
 
 
-
-imprimir_mensaje()
-cargar_datos()
 
 
 
@@ -185,9 +208,51 @@ def update_frame():
     # Llamar nuevamente a update_frame
     root.after(10, update_frame)
 
+
+
+#?==========================================================================================
+
 # Configurar la ventana de Tkinter
 root = tk.Tk()
 root.pack_propagate(True) 
+
+# Minimizar la ventana al iniciar
+root.iconify()
+
+
+
+
+
+
+archivo_in_out = "C:/Royo/Slitter/In_Out/configuracion_In.json"
+seleccion_in_out = imprimir_mensaje()
+
+if seleccion_in_out != "":
+    root.deiconify()
+    print("Cargando configuraciones...")
+
+if seleccion_in_out == "in":
+    archivo_in_out = "C:/Royo/Slitter/In_Out/configuracion_In.json"
+    print("Cargando configuración de Cámara de entrada")
+
+if seleccion_in_out == "out":
+    archivo_in_out = "C:/Royo/Slitter/In_Out/configuracion_Out.json"
+    print("Cargando configuración de Cámara de salida")
+        
+
+
+
+
+
+
+
+
+cargar_datos()
+
+
+cap = cv2.VideoCapture(url)
+cap.set(3, 800)
+cap.set(4, 600)
 
 
 #! Frame para los controles superiores
@@ -333,6 +398,15 @@ root.title(titulo)
 logo_path = os.path.join(base_path, 'AndyO.ico')
 icono = ImageTk.PhotoImage(file=logo_path)
 root.iconphoto(False, icono)
+
+
+
+root.bind('m', maximizar)
+root.bind('d', mitadPantallaDerecha)
+root.bind('i', mitadPantallaIzquierda)
+root.bind('<Escape>', restaurar)
+
+
 
 
 
