@@ -32,16 +32,32 @@ class UmbralApp:
         self.subTitulo = "Torcha_2"
         self.titulo = "AndyO - Slitter"
 
+
+
+
+
         self.master = master
         
-        # Color inicial
-        self.current_color = "red"
+        
+        self.master.title(self.titulo)
+
+        # Cambiar el ícono de la ventana
+        logo_path = os.path.join(self.base_path, 'AndyO.ico')
+        icono = ImageTk.PhotoImage(file=logo_path)
+        self.master.iconphoto(False, icono)
+
 
 
         # Minimizar la ventana al iniciar
         self.master.iconify()
 
 
+
+
+
+
+
+        self.current_color = "red"
 
         self.mensaje_error = False
 
@@ -121,13 +137,7 @@ class UmbralApp:
         self.url = 1
         """Configura la interfaz gráfica de la aplicación."""
 
-        self.master.title(self.titulo)
-
-        # Cambiar el ícono de la ventana
-        logo_path = os.path.join(self.base_path, 'AndyO.ico')
-        icono = ImageTk.PhotoImage(file=logo_path)
-        self.master.iconphoto(False, icono)
-
+        
         arrow_left = self.cargar_imagen('arrow_left.png')
         arrow_right = self.cargar_imagen('arrow_right.png')
         rotate_left = self.cargar_imagen('rotate-left.png')
@@ -386,7 +396,8 @@ class UmbralApp:
             "umbral": self.spacing,
             "distancia_inicial": self.linea_de_inicio,
             "borde_vertical": self.borde_vertical,
-            "correccion_centro": self.correccion_centro 
+            "correccion_centro": self.correccion_centro ,
+            "color": self.current_color
         }
         
         try:
@@ -415,9 +426,9 @@ class UmbralApp:
             self.linea_de_inicio = datos.get("distancia_inicial", 47.0) 
 
             self.correccion_centro = datos.get("correccion_centro", 0)
-
             self.borde_vertical = datos.get("borde_vertical", 10.0)
 
+            self.current_color = datos.get("color", "red")
 
             print("Datos cargados exitosamente.")
         except FileNotFoundError:

@@ -103,7 +103,7 @@ def imprimir_mensaje():
         archivo_json = 'in'
 
 
-    time.sleep(1)
+    time.sleep(2)
     os.system('cls')
 
     if archivo_json == 'in':

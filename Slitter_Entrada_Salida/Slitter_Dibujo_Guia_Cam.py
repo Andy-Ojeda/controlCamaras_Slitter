@@ -13,11 +13,30 @@ base_path = "C:/Royo/Slitter/In_Out"
 distancia_UP = 0
 distancia_DOWN = 0
 
+distancia_UP_extra = 0
+distancia_DOWN_extra = 0
+
+distancia_UP_extra_extra = 0
+distancia_DOWN_extra_extra = 0
+
+
+
+
 centro_UP_ajuste = 0
 centro_DOWN_ajuste = 0
 
 valor_Y_UP = 0
 valor_Y_DOWN = 0
+
+valor_Y_UP_extra = 0
+valor_Y_DOWN_extra = 0
+
+valor_Y_UP_extra_extra = 0
+valor_Y_DOWN_extra_extra = 0
+
+
+
+
 
 titulo = "AndyO - Slitter"
 subTitulo = "Entrada / Salida"
@@ -29,7 +48,10 @@ ip = "192.168.13.14"  # Camara de Guillotina
 # url = f"rtsp://admin:Royo12345@{ip}:80/cam/realmonitor?channel=1&subtype=1"
 
 
-
+current_color_0 = "green"
+current_color_1 = "red"
+current_color_2 = "red"
+current_color_3 = "red"
 
 canvas_w = 0
 canvas_h = 0
@@ -83,10 +105,30 @@ def guardar_datos():
         
         'distancia_UP': distancia_UP,
         'distancia_DOWN': distancia_DOWN,
+        
+        'distancia_UP_extra': distancia_UP_extra,
+        'distancia_DOWN_extra': distancia_DOWN_extra,
+        
+        'distancia_UP_extra_extra': distancia_UP_extra_extra,
+        'distancia_DOWN_extra_extra': distancia_DOWN_extra_extra,
+        
+        
         'centro_UP_ajuste': centro_UP_ajuste,
         'centro_DOWN_ajuste': centro_DOWN_ajuste,
+        
         'valor_Y_UP': valor_Y_UP,
-        'valor_Y_DOWN': valor_Y_DOWN
+        'valor_Y_DOWN': valor_Y_DOWN,
+        
+        'valor_Y_UP_extra': valor_Y_UP_extra,
+        'valor_Y_DOWN_extra': valor_Y_DOWN_extra,
+        
+        'valor_Y_UP_extra_extra': valor_Y_UP_extra_extra,
+        'valor_Y_DOWN_extra_extra': valor_Y_DOWN_extra_extra,
+
+        'color_0': current_color_0,
+        'color_1': current_color_1,
+        'color_2': current_color_2,
+        'color_3': current_color_3,
     }
     
     try:
@@ -100,7 +142,7 @@ def guardar_datos():
         print(f"Error al guardar los datos: {e}")
 
 def cargar_datos():
-    global distancia_UP, distancia_DOWN, centro_UP_ajuste, centro_DOWN_ajuste, valor_Y_UP, valor_Y_DOWN, ip, titulo, subTitulo
+    global distancia_UP, distancia_DOWN, centro_UP_ajuste, centro_DOWN_ajuste, valor_Y_UP, valor_Y_UP_extra, valor_Y_UP_extra_extra, valor_Y_DOWN, valor_Y_DOWN_extra, valor_Y_DOWN_extra_extra, ip, titulo, subTitulo, distancia_UP_extra, distancia_UP_extra_extra, distancia_DOWN_extra, distancia_DOWN_extra_extra, current_color_0, current_color_1, current_color_2, current_color_3
 
     try:
         # Leer los datos desde el archivo de texto
@@ -116,10 +158,36 @@ def cargar_datos():
         
         distancia_UP = datos.get("distancia_UP", 140)
         distancia_DOWN = datos.get("distancia_DOWN", 148)
+        
+        distancia_UP_extra = datos.get("distancia_UP_extra", 150)
+        distancia_DOWN_extra = datos.get("distancia_DOWN_extra", 158)
+        
+        distancia_UP_extra_extra = datos.get("distancia_UP_extra_extra", 160)
+        distancia_DOWN_extra_extra = datos.get("distancia_DOWN_extra_extra", 168)
+        
+        
+        
+        
         centro_UP_ajuste = datos.get("centro_UP_ajuste", -25)
         centro_DOWN_ajuste = datos.get("centro_DOWN_ajuste", 25)
+        
+        
         valor_Y_UP = datos.get("valor_Y_UP", 25)
         valor_Y_DOWN = datos.get("valor_Y_DOWN", 550)
+        
+        valor_Y_UP_extra = datos.get("valor_Y_UP_extra", 25)
+        valor_Y_DOWN_extra = datos.get("valor_Y_DOWN_extra", 550)
+        
+        valor_Y_UP_extra_extra = datos.get("valor_Y_UP_extra_extra", 25)
+        valor_Y_DOWN_extra_extra = datos.get("valor_Y_DOWN_extra_extra", 550)
+
+        current_color_0 = datos.get("color_0", "green")
+        current_color_1 = datos.get("color_1", "red")
+        current_color_2 = datos.get("color_2", "red")
+        current_color_3 = datos.get("color_3", "red")
+
+
+
 
         print("Datos cargados exitosamente.")
     except FileNotFoundError:
@@ -138,21 +206,32 @@ def cargar_datos():
 #     canvas_h = canvas.winfo_height()
 #     print("La ventana ha sido cargada con ancho:", canvas_w, "y alto:", canvas_h)
 
+
 # Función para actualizar las líneas con los valores de los textboxes
-def update_distancia():
-    global distancia_UP, distancia_DOWN
+def update():
+# def update_distancia():
+    global distancia_UP, distancia_UP_extra, distancia_UP_extra_extra, distancia_DOWN, distancia_DOWN_extra, distancia_DOWN_extra_extra
+    
     distancia_UP = int(entry_up.get())
     distancia_DOWN = int(entry_down.get())
+    
+    distancia_UP_extra = int(entry_up_extra.get())
+    distancia_DOWN_extra = int(entry_down_extra.get())
+    
+    distancia_UP_extra_extra = int(entry_up_extra_extra.get())
+    distancia_DOWN_extra_extra = int(entry_down_extra_extra.get())
 
-def update_centro():
     global centro_UP_ajuste, centro_DOWN_ajuste
     centro_UP_ajuste = int(center_up.get())
     centro_DOWN_ajuste = int(center_down.get())
 
-def update_y():
-    global valor_Y_UP, valor_Y_DOWN
+    global valor_Y_UP, valor_Y_UP_extra, valor_Y_UP_extra_extra, valor_Y_DOWN, valor_Y_DOWN_extra, valor_Y_DOWN_extra_extra
     valor_Y_UP = int(y_up.get())
     valor_Y_DOWN = int(y_down.get())
+    valor_Y_UP_extra = int(y_up_extra.get())
+    valor_Y_DOWN_extra = int(y_down_extra.get())      
+    valor_Y_UP_extra_extra = int(y_up_extra_extra.get())
+    valor_Y_DOWN_extra_extra = int(y_down_extra_extra.get())
 
 
 def toggle_menu(event=None):
@@ -164,12 +243,83 @@ def toggle_menu(event=None):
             
 
 
+def cv2_color(tk_color):
+    """Convertir un color de Tkinter a BGR para OpenCV"""
+    tk_colors = {
+        "red": (0, 0, 255),
+        "navy": (128, 0, 0),
+        "blue": (255, 0, 0),
+        "cyan": (255, 255, 0),
+        "darkgreen": (0, 100, 0),
+        "green": (0, 255, 0),
+        "lime": (50, 205, 50),
+        "gold": (0, 215, 255),
+        "yellow": (0, 255, 255),
+        "purple": (128, 0, 128),
+        "magenta": (255, 0, 255),
+        "black": (0, 0, 0),
+        "white": (255, 255, 255),
+    }
+    return tk_colors.get(tk_color, (0, 0, 0))  # Negro por defecto
+
+
+
+
+def cambiar_color_0(event=None):
+        global current_color_0
+        colores0 = ["red", "navy", "blue", "cyan", "darkgreen", "green", "lime", "gold", "yellow", "purple", "magenta", "black", "white"]
+        # Obtiene el índice actual del color
+        current_index0 = colores0.index(current_color_0)
+        # Cambia al siguiente color en la lista (ciclo)
+        current_color_0 = colores0[(current_index0 + 1) % len(colores0)]
+        # Cambia el color del cuadrado
+        color_0_button.configure(fg=current_color_0)
+        
+def cambiar_color_1(event=None):
+        global current_color_1
+        colores = ["red", "navy", "blue", "cyan", "darkgreen", "green", "lime", "gold", "yellow", "purple", "magenta", "black", "white"]
+        # Obtiene el índice actual del color
+        current_index = colores.index(current_color_1)
+        # Cambia al siguiente color en la lista (ciclo)
+        current_color_1 = colores[(current_index + 1) % len(colores)]
+        # Cambia el color del cuadrado
+        color_1_button.configure(fg=current_color_1)
+
+def cambiar_color_2(event=None):
+        global current_color_2
+        colores2 = ["red", "navy", "blue", "cyan", "darkgreen", "green", "lime", "gold", "yellow", "purple", "magenta", "black", "white"]
+        # Obtiene el índice actual del color
+        current_index2 = colores2.index(current_color_2)
+        # Cambia al siguiente color en la lista (ciclo)
+        current_color_2 = colores2[(current_index2 + 1) % len(colores2)]
+        # Cambia el color del cuadrado
+        color_2_button.configure(fg=current_color_2)
+
+def cambiar_color_3(event=None):
+        global current_color_3
+        colores3 = ["red", "navy", "blue", "cyan", "darkgreen", "green", "lime", "gold", "yellow", "purple", "magenta", "black", "white"]
+        # Obtiene el índice actual del color
+        current_index3 = colores3.index(current_color_3)
+        # Cambia al siguiente color en la lista (ciclo)
+        current_color_3 = colores3[(current_index3 + 1) % len(colores3)]
+        # Cambia el color del cuadrado
+        color_3_button.configure(fg=current_color_3)
+        
+
+
+
+
+
+
+
+
+
 
 
 
 # Función que se ejecuta continuamente para mostrar el feed de la webcam
 def update_frame():
-    global distancia_UP, distancia_DOWN, centro_UP_ajuste, centro_DOWN_ajuste, valor_Y_UP, valor_Y_DOWN, canvas_w, canvas_h
+    global distancia_UP, distancia_UP_extra, distancia_UP_extra_extra, distancia_DOWN, distancia_DOWN_extra, distancia_DOWN_extra_extra, centro_UP_ajuste, centro_DOWN_ajuste, valor_Y_UP, valor_Y_DOWN, canvas_w, canvas_h
 
     ret, frame = cap.read()
     if not ret:
@@ -191,10 +341,33 @@ def update_frame():
     right_UP = centro_UP + distancia_UP
     right_DOWN = centro_DOWN + distancia_DOWN
 
+    left_UP_extra = centro_UP - distancia_UP_extra
+    left_DOWN_extra = centro_DOWN - distancia_DOWN_extra
+    right_UP_extra = centro_UP + distancia_UP_extra
+    right_DOWN_extra = centro_DOWN + distancia_DOWN_extra
+
+    left_UP_extra_extra = centro_UP - distancia_UP_extra_extra
+    left_DOWN_extra_extra = centro_DOWN - distancia_DOWN_extra_extra
+    right_UP_extra_extra = centro_UP + distancia_UP_extra_extra
+    right_DOWN_extra_extra = centro_DOWN + distancia_DOWN_extra_extra
+
+
     # Dibujar las líneas
-    cv2.line(frame, (centro_UP, valor_Y_UP), (centro_DOWN, valor_Y_DOWN), (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-    cv2.line(frame, (left_UP, valor_Y_UP), (left_DOWN, valor_Y_DOWN), (255, 0, 255), thickness=2, lineType=cv2.LINE_AA)
-    cv2.line(frame, (right_UP, valor_Y_UP), (right_DOWN, valor_Y_DOWN), (255, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+    # cv2.line(frame, (centro_UP, valor_Y_UP), (centro_DOWN, valor_Y_DOWN), (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+    cv2.line(frame, (centro_UP, 2), (centro_DOWN, height), cv2_color(current_color_0), thickness=2, lineType=cv2.LINE_AA)
+    
+
+
+    cv2.line(frame, (left_UP, valor_Y_UP), (left_DOWN, valor_Y_DOWN), cv2_color(current_color_1), thickness=2, lineType=cv2.LINE_AA)
+    cv2.line(frame, (right_UP, valor_Y_UP), (right_DOWN, valor_Y_DOWN), cv2_color(current_color_1), thickness=2, lineType=cv2.LINE_AA)
+    # Dibujar las líneas adicionales
+    cv2.line(frame, (left_UP_extra, valor_Y_UP_extra), (left_DOWN_extra, valor_Y_DOWN_extra), cv2_color(current_color_2), thickness=2, lineType=cv2.LINE_AA)
+    cv2.line(frame, (right_UP_extra, valor_Y_UP_extra), (right_DOWN_extra, valor_Y_DOWN_extra), cv2_color(current_color_2), thickness=2, lineType=cv2.LINE_AA)
+    # Dibujar las líneas adicionales adicionales
+    cv2.line(frame, (left_UP_extra_extra, valor_Y_UP_extra_extra), (left_DOWN_extra_extra, valor_Y_DOWN_extra_extra), cv2_color(current_color_3), thickness=2, lineType=cv2.LINE_AA)
+    cv2.line(frame, (right_UP_extra_extra, valor_Y_UP_extra_extra), (right_DOWN_extra_extra, valor_Y_DOWN_extra_extra), cv2_color(current_color_3), thickness=2, lineType=cv2.LINE_AA)
+
+
 
     # Convertir el frame a formato compatible con tkinter
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -215,6 +388,14 @@ def update_frame():
 # Configurar la ventana de Tkinter
 root = tk.Tk()
 root.pack_propagate(True) 
+
+
+root.title(titulo)
+
+logo_path = os.path.join(base_path, 'AndyO.ico')
+icono = ImageTk.PhotoImage(file=logo_path)
+root.iconphoto(False, icono)
+
 
 # Minimizar la ventana al iniciar
 root.iconify()
@@ -301,7 +482,7 @@ menu_frame = tk.Frame(root, highlightthickness=2, bg="orange")
 menu_frame.pack_propagate(False)  # Evitar que el frame se ajuste automáticamente al contenido
 menu_frame.pack_forget()  # Ocultar el menú al inicio
 
-menu_frame.configure(height=150) 
+menu_frame.configure(height=180) 
 
 
 titulo_menu = tk.Label(menu_frame, text="Configuración:", font=("Arial", 16), anchor="center", bg="orange")
@@ -312,9 +493,40 @@ label_ip = tk.Label(menu_frame, text=f"IP: {ip}", font=("Arial", 10), bg="orange
 label_ip.pack(pady=2)
 label_ip.place(x=10 , y=10)
 
+
+cor_x = 30
+
+
+color_0_button = tk.Button(menu_frame, text="Color", fg=current_color_0, command=cambiar_color_0)
+color_0_button.pack()
+color_0_button.place(x=300+cor_x+cor_x+cor_x , y=144)
+
+color_1_button = tk.Button(menu_frame, text="Color", fg=current_color_1, command=cambiar_color_1)
+color_1_button.pack()
+color_1_button.place(x=12 , y=144)
+
+color_2_button = tk.Button(menu_frame, text="Color", fg=current_color_2, command=cambiar_color_2)
+color_2_button.pack()
+color_2_button.place(x=107+cor_x , y=144)
+
+color_3_button = tk.Button(menu_frame, text="Color", fg=current_color_3, command=cambiar_color_3)
+color_3_button.pack()
+color_3_button.place(x=202+cor_x+cor_x , y=144)
+
+button_update_center = tk.Button(menu_frame, text="  OK  ", command=update)
+button_update_center.pack()
+button_update_center.place(x=300+cor_x+cor_x+cor_x, y=50)
+
 guardar_button = tk.Button(menu_frame, text="Guardar", command=guardar_datos)
 guardar_button.pack()
-guardar_button.place(x=150 , y=10)
+guardar_button.place(x=342+cor_x+cor_x+cor_x, y=50)
+
+
+
+
+
+
+
 
 # # Crear un canvas para mostrar el feed de la webcam
 # canvas_width = 640
@@ -323,81 +535,133 @@ guardar_button.place(x=150 , y=10)
 # canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 
-
 # ---------------------------------  Distancia desde el Centro  -------------------------------------------
 # Label y Textbox para distancia_UP
-label_up = tk.Label(menu_frame, text="Distancia UP:", bg="lightgray")
-label_up.place(x=10, y=50)
+label_up = tk.Label(menu_frame, text="Dist_1🔺", bg="lightgray")
+label_up.place(x=12, y=50)
 entry_up = tk.Entry(menu_frame, width=5)
 entry_up.insert(0, str(distancia_UP))
-entry_up.place(x=110, y=50)
+entry_up.place(x=63, y=52)
 
 # Label y Textbox para distancia_DOWN
-label_down = tk.Label(menu_frame, text="Distancia DOWN:", bg="lightgray")
-label_down.place(x=10, y=73)
+label_down = tk.Label(menu_frame, text="Dist_1🔻", bg="lightgray")
+label_down.place(x=12, y=73)
 entry_down = tk.Entry(menu_frame, width=5)
 entry_down.insert(0, str(distancia_DOWN))
-entry_down.place(x=110, y=73)
+entry_down.place(x=63, y=75)
+#?-----------------------------------------------------------
+# Label y Textbox para distancia_UP_extra
+label_up_extra = tk.Label(menu_frame, text="Dist_2🔺", bg="lightgray")
+label_up_extra.place(x=107+cor_x, y=50)
+entry_up_extra = tk.Entry(menu_frame, width=5)
+entry_up_extra.insert(0, str(distancia_UP_extra))
+entry_up_extra.place(x=158+cor_x, y=52)
+
+# Label y Textbox para distancia_DOWN_extra
+label_down_extra = tk.Label(menu_frame, text="Dist_2🔻", bg="lightgray")
+label_down_extra.place(x=107+cor_x, y=73)
+entry_down_extra = tk.Entry(menu_frame, width=5)
+entry_down_extra.insert(0, str(distancia_DOWN_extra))
+entry_down_extra.place(x=158+cor_x, y=75)
+#?-----------------------------------------------------------
+# Label y Textbox para distancia_UP_extra_extra
+label_up_extra_extra = tk.Label(menu_frame, text="Dist_3🔺", bg="lightgray")
+label_up_extra_extra.place(x=202+cor_x+cor_x, y=50)
+entry_up_extra_extra = tk.Entry(menu_frame, width=5)
+entry_up_extra_extra.insert(0, str(distancia_UP_extra_extra))
+entry_up_extra_extra.place(x=253+cor_x+cor_x, y=52)
+
+# Label y Textbox para distancia_DOWN_extra_extra
+label_down_extra_extra = tk.Label(menu_frame, text="Dist_3🔻", bg="lightgray")
+label_down_extra_extra.place(x=202+cor_x+cor_x, y=73)
+entry_down_extra_extra = tk.Entry(menu_frame, width=5)
+entry_down_extra_extra.insert(0, str(distancia_DOWN_extra_extra))
+entry_down_extra_extra.place(x=253+cor_x+cor_x, y=75)
+#?-----------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Botón para actualizar las líneas
-button_update = tk.Button(menu_frame, text="Actualizar", command=update_distancia)
-button_update.place(x=10, y=100)
+# button_update = tk.Button(menu_frame, text="Actualizar", command=update_distancia)
+# button_update.place(x=10, y=100)
 # -----------------------------------------------------------------------------------------------------------
 
 # ------------------------------  Valores Linea Central  -------------------------------
 # Label y Textbox para centro_UP
-label_up_center = tk.Label(menu_frame, text="Centro UP:", bg="lightgray")
-label_up_center.place(x=200, y=50)
+label_up_center = tk.Label(menu_frame, text="Centro 🔺", bg="lightgray")
+label_up_center.place(x=300+cor_x+cor_x+cor_x, y=96)
 center_up = tk.Entry(menu_frame, width=5)
 center_up.insert(0, str(centro_UP_ajuste))
-center_up.place(x=288, y=50)
+center_up.place(x=359+cor_x+cor_x+cor_x, y=98)
 
 # Label y Textbox para centro_DOWN
-label_down_center = tk.Label(menu_frame, text="Centro DOWN:", bg="lightgray")
-label_down_center.place(x=200, y=73)
+label_down_center = tk.Label(menu_frame, text="Centro 🔻", bg="lightgray")
+label_down_center.place(x=300+cor_x+cor_x+cor_x, y=119)
 center_down = tk.Entry(menu_frame, width=5)
 center_down.insert(0, str(centro_DOWN_ajuste))
-center_down.place(x=288, y=73)
+center_down.place(x=359+cor_x+cor_x+cor_x, y=121)
 
-# Botón para actualizar los valores del centro
-button_update_center = tk.Button(menu_frame, text="Actualizar", command=update_centro)
-button_update_center.place(x=200, y=100)
 # --------------------------------------------------------------------------------------
 
 # ------------------------------  Valores Y  -------------------------------
 # Label y Textbox para valor_Y_UP
-label_up_y = tk.Label(menu_frame, text="Y_UP:", bg="lightgray")
-label_up_y.place(x=380, y=50)
-y_up = tk.Entry(menu_frame, width=5)
+label_up_y = tk.Label(menu_frame, text="Mov_1🔺", bg="lightgray")
+label_up_y.place(x=12, y=96)
+y_up = tk.Entry(menu_frame, width=4)
 y_up.insert(0, str(valor_Y_UP))
-y_up.place(x=441, y=50)
+y_up.place(x=69, y=98)
 
 # Label y Textbox para valor_Y_DOWN
-label_down_y = tk.Label(menu_frame, text="Y_DOWN:", bg="lightgray")
-label_down_y.place(x=380, y=73)
-y_down = tk.Entry(menu_frame, width=5)
+label_down_y = tk.Label(menu_frame, text="Mov_1🔻", bg="lightgray")
+label_down_y.place(x=12, y=119)
+y_down = tk.Entry(menu_frame, width=4)
 y_down.insert(0, str(valor_Y_DOWN))
-y_down.place(x=441, y=73)
+y_down.place(x=69, y=121)
+# --------------------------------------------------------------------------
+# Label y Textbox para valor_Y_UP_extra
+label_up_y_extra = tk.Label(menu_frame, text="Mov_2🔺", bg="lightgray")
+label_up_y_extra.place(x=107+cor_x, y=96)
+y_up_extra = tk.Entry(menu_frame, width=4)
+y_up_extra.insert(0, str(valor_Y_UP_extra))
+y_up_extra.place(x=164+cor_x, y=98)
 
-# Botón para actualizar los valores Y
-button_update_y = tk.Button(menu_frame, text="Actualizar", command=update_y)
-button_update_y.place(x=380, y=100)
+# Label y Textbox para valor_Y_DOWN_extra
+label_down_y_extra = tk.Label(menu_frame, text="Mov_2🔻", bg="lightgray")
+label_down_y_extra.place(x=107+cor_x, y=119)
+y_down_extra = tk.Entry(menu_frame, width=4)
+y_down_extra.insert(0, str(valor_Y_DOWN_extra))
+y_down_extra.place(x=164+cor_x, y=121)
+# --------------------------------------------------------------------------
+# Label y Textbox para valor_Y_UP_extra_extra
+label_up_y_extra_extra = tk.Label(menu_frame, text="Mov_3🔺", bg="lightgray")
+label_up_y_extra_extra.place(x=202+cor_x+cor_x, y=96)
+y_up_extra_extra = tk.Entry(menu_frame, width=4)
+y_up_extra_extra.insert(0, str(valor_Y_UP_extra))
+y_up_extra_extra.place(x=259+cor_x+cor_x, y=98)
+
+# Label y Textbox para valor_Y_DOWN_extra_extra
+label_down_y_extra_extra = tk.Label(menu_frame, text="Mov_3🔻", bg="lightgray")
+label_down_y_extra_extra.place(x=202+cor_x+cor_x, y=119)
+y_down_extra_extra = tk.Entry(menu_frame, width=4)
+y_down_extra_extra.insert(0, str(valor_Y_DOWN_extra_extra))
+y_down_extra_extra.place(x=259+cor_x+cor_x, y=121)
 # --------------------------------------------------------------------------
 
 
 
 
-
-
-root.title(titulo)
-
-# current_dir = os.path.dirname(__file__)
-# logo_path = os.path.join(current_dir, '..', 'AndyO.ico')
-# icono = ImageTk.PhotoImage(file=logo_path)
-# root.iconphoto(False, icono)
-logo_path = os.path.join(base_path, 'AndyO.ico')
-icono = ImageTk.PhotoImage(file=logo_path)
-root.iconphoto(False, icono)
 
 
 
