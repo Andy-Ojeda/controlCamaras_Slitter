@@ -5,11 +5,11 @@ import os
 def imprimir_mensaje():
 
 
-    os.system('cls')
+    # os.system('cls')  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
 
     print("                     _                         ")
     print("                    |_)o _ ._    _ ._ o _| _   ")
-    print("                    |_)|(/_| |\/(/_| ||(_|(_)  ")
+    print("                    |_)|(/_| |\\/(/_| ||(_|(_)  ")
     print("                                               ")
     print("                                  ")
     print("                               _. ")
@@ -18,9 +18,9 @@ def imprimir_mensaje():
     print("                                  ")
     print("                    _____ ___ __  __           ")
     print("                   / ___// (_) /_/ /____  _____")
-    print("                   \__ \/ / / __/ __/ _ \/ ___/")
-    print("          /\/|    ___/ / / / /_/ /_/  __/ /       /\/|")
-    print("          |/\/   /____/_/_/\__/\__/\___/_/        |/\/")
+    print("                   \\__ \\/ / / __/ __/ _ \\/ ___/")
+    print("          /\\/|    ___/ / / / /_/ /_/  __/ /       /\\/|")
+    print("          |/\\/   /____/_/_/\\__/\\__/\\___/_/        |/\\/")
                               
  
     time.sleep(1)
@@ -30,7 +30,7 @@ def imprimir_mensaje():
     print("")
     print("")  
     print("                             |_    ")
-    print("                             |_)\/ ")
+    print("                             |_)\\/ ")
     print("                                /  ")
 
     print("")
@@ -104,7 +104,7 @@ def imprimir_mensaje():
 
 
     time.sleep(2)
-    os.system('cls')
+    os.system('cls')  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
 
     if archivo_json == 'T1':
         print("")
@@ -139,7 +139,7 @@ def imprimir_mensaje():
 
 
     # # Minimizar la consola
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)
+    #!!!!!!!!! ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)
 
     
     # Cierra consola

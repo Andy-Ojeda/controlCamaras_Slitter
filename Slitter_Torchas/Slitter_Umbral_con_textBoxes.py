@@ -11,21 +11,38 @@ import threading
 from msg import imprimir_mensaje
 import os
 import json
-import ctypes
+from onvif import ONVIFCamera
+import time
+import webbrowser
+# from tkinter import messagebox
+# import pyautogui
+import mss
+import datetime
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# from zeep import Client
+# from zeep.transports import Transport
+
+# transport = Transport(operation_timeout=10, cache=None, session=None)
+# client = Client('http://direccion-del-servicio-onvif', transport=transport)
+
+
 
 
 class UmbralApp:
 
     def __init__(self, master):
 
+
         self.base_path = "C:/Royo/Slitter/Torchas"
 
-        # Dirección IP de la cámara
-        # rtsp_url = "rtsp://admin:Daynadayna1301@192.168.1.108:554/cam/realmonitor?channel=4&subtype=0"
-        # self.ip = "http://192.168.43.172:4747/video"
-        # self.url = 1
-        # self.ip = 1
-        self.ip = "192.168.13.13"       # Torcha 1
+        self.ip = "192.168.13.0"       # Torcha 1
+        self.username = "admin"
+        self.password = "admin"
+        self.port = 80
+        self.calidad_camara = 0
+
+        # self.ip = "192.168.13.13"       # Torcha 1
         # self.ip = "192.168.13.12"       # Torcha 2
 
 
@@ -33,9 +50,9 @@ class UmbralApp:
         self.titulo = "AndyO - Slitter"
 
 
+        self.wsdl_path = 'C:/wsdl'
 
-
-
+        self.mensaje_error = False
         self.master = master
         
         
@@ -46,14 +63,8 @@ class UmbralApp:
         icono = ImageTk.PhotoImage(file=logo_path)
         self.master.iconphoto(False, icono)
 
-
-
         # Minimizar la ventana al iniciar
         self.master.iconify()
-
-
-
-
 
 
 
@@ -75,6 +86,7 @@ class UmbralApp:
 
         self.desplazamiento_y = 0
         self.desplaz_x = 0
+        self.desplaz_centro_x = 0
         self.anguloIzq = 0
         self.anguloDer = 0
 
@@ -94,20 +106,23 @@ class UmbralApp:
         
 
         self.archivo_Torcha = ""
+        self.archivo_Calibr = ""
         
         self.seleccion_Torcha = imprimir_mensaje()
         # print("Variable: ", self.seleccion_Torcha)
 
-        if self.seleccion_Torcha is not "":
+        if self.seleccion_Torcha != "":
             self.master.deiconify()
             print("Cargando configuraciones...")
 
         if self.seleccion_Torcha == "T1":
             self.archivo_Torcha = "C:/Royo/Slitter/Torchas/configuracion_T1.json"
+            self.archivo_Calibr = "C:/Royo/Slitter/Torchas/calibracion_T1.json"
             print("Cargando configuración de Torcha_1")
         
         if self.seleccion_Torcha == "T2":
             self.archivo_Torcha = "C:/Royo/Slitter/Torchas/configuracion_T2.json"
+            self.archivo_Calibr = "C:/Royo/Slitter/Torchas/calibracion_T2.json"
             print("Cargando configuración de Torcha_2")
         
 
@@ -116,7 +131,7 @@ class UmbralApp:
 
 
         self.setup_ui()  # Configurar la interfaz gráfica
-        # self.mostrar_pantalla_negra()
+        
 
         self.connect_camera()
     
@@ -124,6 +139,7 @@ class UmbralApp:
     def connect_camera(self):
         # Intentar abrir la cámara
         self.cap = cv2.VideoCapture(self.url)
+        time.sleep(2)
         if not self.cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
             self.mostrar_pantalla_negra()
@@ -133,8 +149,11 @@ class UmbralApp:
 
     def setup_ui(self):
         self.cargar_datos()
+        self.Cargar_Calibracion()
+        
         # self.url = f"rtsp://admin:Royo12345@{self.ip}:80/cam/realmonitor?channel=1&subtype=0"
-        self.url = 1
+        self.url = f"rtsp://{self.username}:{self.password}@{self.ip}:{self.port}/cam/realmonitor?channel=1&subtype={self.calidad_camara}"
+        # self.url = 1
         """Configura la interfaz gráfica de la aplicación."""
 
         
@@ -143,6 +162,10 @@ class UmbralApp:
         rotate_left = self.cargar_imagen('rotate-left.png')
         rotate_right = self.cargar_imagen('rotate-right.png')
 
+        arrow_left_green = self.cargar_imagen('arrow_left_green.png')
+        arrow_right_green = self.cargar_imagen('arrow_right_green.png')
+
+        zoom_foco = self.cargar_imagen('enfocar.png')
 
 
 
@@ -177,9 +200,30 @@ class UmbralApp:
         self.label_ip.pack(pady=2)
         self.label_ip.place(x=10 , y=10)
 
-        guardar_button = tk.Button(self.menu_frame, text="Guardar", command=self.guardar_datos)
+        guardar_button = tk.Button(self.menu_frame, text="- Guardar Datos -", command=self.guardar_datos)
         guardar_button.pack()
-        guardar_button.place(x=150 , y=10)
+        guardar_button.place(x=260 , y=76)
+
+
+
+
+
+
+        self.label_Focus = tk.Label(self.menu_frame, text="Foco:", font=("Arial", 10), bg="orange")
+        self.label_Focus.pack(pady=2)
+        self.label_Focus.place(x=170 , y=10)
+        
+        # Boton de Zoom + usado para que enfoque nuevamente
+        # self.zoom_focus = tk.Button(self.menu_frame, image=zoom_foco, command=self.connect_and_zoom)
+        self.zoom_focus = tk.Button(self.menu_frame, image=zoom_foco, command=self.open_browser)
+        self.zoom_focus.image = zoom_foco
+        self.zoom_focus.pack()
+        self.zoom_focus.place(x=210, y=10)
+        
+        # self.zoom_focus['state'] = 'disabled'
+
+
+
 
 
 
@@ -219,22 +263,12 @@ class UmbralApp:
         # Actualizar tareas pendientes para calcular el tamaño
         self.master.update_idletasks()
 
-    
-
-
-        
-
-
-
-
         # Botón + de ZOOM
         # self.button_zoom_in = tk.Button(control_frame, text="🔎+", command=self.zoom_in)
         # self.button_zoom_in.pack()
         # # Botón - de ZOOM
         # self.button_zoom_out = tk.Button(control_frame, text="🔎-", command=self.zoom_out)
         # self.button_zoom_out.pack()
-
-
 
         # Botones para mover las líneas hacia arriba y abajo
         self.boton_arriba = tk.Button(control_frame, text="🔺", command=self.mover_arriba)
@@ -255,6 +289,31 @@ class UmbralApp:
         self.boton_derecha.image = arrow_right  
         self.boton_derecha.pack(side=tk.LEFT)
         self.boton_derecha['state'] = 'disabled'
+
+
+
+
+
+
+        self.Boton_Guardar_Calib = tk.Button(control_frame, text="Guardar calib.", command=self.Guardar_Calibracion)
+        self.Boton_Guardar_Calib.pack(side=tk.LEFT)
+        # self.Boton_Guardar_Calib['state'] = 'disabled'
+        self.Boton_Guardar_Calib.pack_forget()
+
+
+
+
+
+        # Botones para MOVER las líneas CENTRO a la izquierda y derecha
+        self.boton_izquierda_centro = tk.Button(control_frame, image=arrow_left_green, command=self.mover_Centro_izquierda)
+        self.boton_izquierda_centro.image = arrow_left_green
+        self.boton_izquierda_centro.pack(side=tk.LEFT)
+        self.boton_izquierda_centro['state'] = 'disabled'
+        
+        self.boton_derecha_centro = tk.Button(control_frame, image=arrow_right_green, command=self.mover_Centro_derecha)
+        self.boton_derecha_centro.image = arrow_right_green  
+        self.boton_derecha_centro.pack(side=tk.LEFT)
+        self.boton_derecha_centro['state'] = 'disabled'
 
         # Botones para ROTAR las líneas a la izquierda y derecha
         self.boton_rotar_izquierda = tk.Button(control_frame, image=rotate_left, command=self.rotar_Umbral_izquierda)
@@ -285,9 +344,6 @@ class UmbralApp:
         self.boton_color['state'] = 'disabled'
         self.boton_color.configure(bg="lightgray")
 
-        
-
-        
         # Label y Textbox para Umbral vertical (Al lado de la linea de en medio verde de la camara)
         self.label_umbral_Vert = tk.Label(self.menu_frame, text="Umbral Vertical:", bg="lightgray")
         self.umbral_Vert = tk.Entry(self.menu_frame, width=5)
@@ -301,14 +357,9 @@ class UmbralApp:
 
         # Labels de correccion_centro (Informa sobre la correccion que se le hace a la linea central)
         self.label_correccion_centro = tk.Label(self.menu_frame, text="Correccion_centro Vertival:", bg="orange")
-        self.label_correccion_centro_num = tk.Label(self.menu_frame, text=self.correccion_centro, bg="orange")
+        self.label_correccion_centro_num = tk.Label(self.menu_frame, text=self.desplaz_centro_x, bg="orange")
         
         
-
-
-
-
-
 
         # Label y Textbox para primera Linea (Distancia entre Prensa - UMBRAL)
         self.label_lineaUno = tk.Label(self.menu_frame, text="Linea de Inicio:", bg="lightgray")
@@ -358,13 +409,87 @@ class UmbralApp:
         self.master.bind('i', self.mitadPantallaIzquierda)
         self.master.bind('<Escape>', self.restaurar)
 
-
+        self.hacer_parpadear()
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
     
 
 
+    def open_browser(self, event=None):
+        # Abre la URL en el navegador predeterminado
+        print("Abriendo configuracion de Cámara... ", self.ip)
+        webbrowser.open(f"http://{self.ip}")
     
+
+    def capturar_pantalla(self, event=None):
+        # Ruta donde se guardarán las capturas
+        ruta_captura = "C:\Royo\Slitter\Torchas\capturas"
+        
+        # Verificar si la carpeta existe, si no, crearla
+        if not os.path.exists(ruta_captura):
+            os.makedirs(ruta_captura)
+
+        # Captura de pantalla
+        # screenshot = pyautogui.screenshot()
+
+
+        # Usar mss para capturar todo el escritorio combinado
+        with mss.mss() as sct:
+            # Capturar todas las pantallas (monitor 0 incluye todas)
+            screenshot_path = sct.shot(mon=-1)  # Esto devuelve la ruta del archivo PNG
+
+        # Convertir la imagen PNG a JPG usando Pillow
+        with Image.open(screenshot_path) as img:
+            # Convertir a modo RGB (requerido para JPG)
+            img = img.convert("RGB")
+
+            # Generar el nombre del archivo
+            now = datetime.datetime.now()
+            filename = now.strftime("%Y-%m-%d_%H-%M-%S.jpg")
+            ruta_completa = os.path.join(ruta_captura, filename)
+
+            # Guardar como JPG
+            img.save(ruta_completa, "JPEG")
+
+        # Eliminar el archivo PNG original
+        os.remove(screenshot_path)
+
+
+
+
+    #!!!!!!!!!!!!! Funciones para controlar zoom y enfoque
+
+    def connect_and_zoom(self):
+        try:
+            # Conectar a la cámara
+            mycam = ONVIFCamera(self.ip, self.port, self.username, self.password, self.wsdl_path)
+            # mycam = ONVIFCamera(self.ip, self.port, self.username, self.password)
+
+            # Obtener el perfil predeterminado de la cámara
+            media_service = mycam.create_media_service()
+            profiles = media_service.GetProfiles()
+            profile = profiles[0]  # Usamos el primer perfil
+
+            # Crear servicio de control PTZ
+            ptz_service = mycam.create_ptz_service()
+            ptz_request = ptz_service.create_type('ContinuousMove')
+            ptz_request.ProfileToken = profile.token
+
+            # Configuración para realizar zoom in
+            ptz_request.Velocity = ptz_service.GetStatus({'ProfileToken': profile.token}).Position
+            ptz_request.Velocity.Zoom.x = 0.5  # Zoom in
+            ptz_service.ContinuousMove(ptz_request)
+            time.sleep(0.5)  # Ajustar la duración del zoom
+            ptz_service.Stop({'ProfileToken': profile.token})
+
+            # Desconectar de la cámara
+            mycam = None
+            print("Enfoque realizado y desconexión completada.")
+        except Exception as e:
+            print(f"No se pudo conectar o realizar Enfoque: {str(e)}")
+
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
@@ -391,13 +516,17 @@ class UmbralApp:
         datos = {
             "titulo": self.titulo,
             "subtitulo": self.subTitulo,
+
             "ip": self.ip,
+            "username": self.username,
+            "password": self.password,
             "patron": self.scale,
             "umbral": self.spacing,
             "distancia_inicial": self.linea_de_inicio,
             "borde_vertical": self.borde_vertical,
-            "correccion_centro": self.correccion_centro ,
-            "color": self.current_color
+            "correccion_centro": self.desplaz_centro_x ,
+            "color": self.current_color,
+            "calidad_camara": self.calidad_camara
         }
         
         try:
@@ -418,23 +547,122 @@ class UmbralApp:
                 datos = json.load(archivo)
             
             self.ip = datos.get("ip", "192.168.13.1")
-            print("IP: ", self.ip)
-            self.titulo = datos.get("titulo", "AndyO - Slitter")
+            self.username = datos.get("username", "admin")
+            self.password = datos.get("password", "admin")
+            self.titulo = datos.get("titulo", "AndyO - ")
             self.subTitulo = datos.get("subtitulo", "Torcha")
             self.scale = datos.get("patron", 10.0) 
             self.spacing = datos.get("umbral", 3.0)
             self.linea_de_inicio = datos.get("distancia_inicial", 47.0) 
 
-            self.correccion_centro = datos.get("correccion_centro", 0)
+            self.desplaz_centro_x = datos.get("correccion_centro", 0)
             self.borde_vertical = datos.get("borde_vertical", 10.0)
 
             self.current_color = datos.get("color", "red")
 
+            self.calidad_camara = datos.get("calidad_camara", 0)
+
+            print("IP: ", self.ip)
+            print("Calidad de la cámara (0=HIGH | 1=LOW): ", self.calidad_camara)
             print("Datos cargados exitosamente.")
         except FileNotFoundError:
             print("Archivo de configuración no encontrado. Usando valores predeterminados.")
 
 
+   
+   
+   
+   
+   #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   
+    
+    def Guardar_Calibracion(self):
+        self.capturar_pantalla()                    # Guardo pantalla
+        self.Boton_Guardar_Calib.place_forget()     # Oculto boton
+        # Crear un diccionario con los datos que deseas guardar
+        datos = {
+            "p1": self.points[0],
+            "p2": self.points[1],
+
+            "desplaz_x": self.desplaz_x,
+            "desplazamiento_y": self.desplazamiento_y,
+
+            "desplaz_centro_x": self.desplaz_centro_x,
+            "borde_vertical": self.borde_vertical,
+
+            "anguloIzq": self.anguloIzq,
+            "anguloDer": self.anguloDer
+        }
+        
+        try:
+            ruta_archivo = os.path.join(self.archivo_Calibr)
+            with open(ruta_archivo, 'w') as archivo:
+                json.dump(datos, archivo, indent=4)
+
+            print("----------------------------------------------------")
+            print(f"Calibración guardada exitosamente!!")
+            print("----------------------------------------------------")
+            print("p1= ", self.points[0])
+            print("p2= ", self.points[1])
+            print("desplaz_x= ", self.desplaz_x)
+            print("desplazamiento_y= ", self.desplazamiento_y)
+            print("desplaz_centro_x= ", self.desplaz_centro_x)
+            print("borde_vertical= ", self.borde_vertical)
+            print("angulo_Izq= ", self.anguloIzq)
+            print("angulo_Der= ", self.anguloDer)
+
+
+
+
+
+
+        except Exception as e:
+            print(f"Error al guardar la calibración: {e}")
+
+
+    def Cargar_Calibracion(self):
+        try:
+            # Leer los datos desde el archivo de texto
+            print("Archivo a cargar: ", self.archivo_Calibr)
+            ruta_archivo = os.path.join(self.archivo_Calibr)
+            with open(ruta_archivo, 'r') as archivo:
+                datos = json.load(archivo)
+            
+            self.points = [datos.get("p1", [0,0]), datos.get("p2", [0,0])]
+            
+            self.desplaz_x = datos.get("desplaz_x", 0)
+            self.desplazamiento_y = datos.get("desplazamiento_y", 0)
+
+            self.desplaz_centro_x = datos.get("desplaz_centro_x", 0)
+            self.borde_vertical = datos.get("borde_vertical", 0)
+
+            self.anguloIzq = datos.get("anguloIzq", 0)
+            self.anguloDer = datos.get("anguloDer", 0)
+
+            print("----------------------------------------------------")
+            print("Calibración cargada exitosamente.")
+            print("----------------------------------------------------")
+            print("p1= ", self.points[0])
+            print("p2= ", self.points[1])
+            print("desplaz_x= ", self.desplaz_x)
+            print("desplazamiento_y= ", self.desplazamiento_y)
+            print("desplaz_centro_x= ", self.desplaz_centro_x)
+            print("borde_vertical= ", self.borde_vertical)
+            print("angulo_Izq= ", self.anguloIzq)
+            print("angulo_Der= ", self.anguloDer)
+        except FileNotFoundError:
+            print("Archivo de calibración no encontrado. Usando valores predeterminados.")
+
+
+   
+   #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   
+   
+   
+   
+   
+   
+   
     def cargar_imagen(self, filename, size=(20, 20)):
         path = os.path.join(self.base_path, filename)
         image = Image.open(path)
@@ -449,21 +677,36 @@ class UmbralApp:
         self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, fill="black")
          # Agregar el texto "Sin Señal" en el medio de la pantalla
         self.canvas.create_text(self.canvas_width // 2, self.canvas_height // 2, text="Sin Señal", fill="red", font=("Helvetica", 24))
-        if self.reconnect_button is None:
-            self.reconnect_button = tk.Button(self.canvas, text="Reconectar", command=self.reconnect_camera)
-            self.reconnect_button.place(x=self.canvas_width // 2 - 50, y=(self.canvas_height // 2) + 30)
-        else:
-            self.reconnect_button.place_forget()  # Asegúrate de que el botón no esté visible antes
+        
+        self.reconnect_text = self.canvas.create_text(
+            self.canvas_width // 2,
+            (self.canvas_height // 2) + 50,
+            text="Reconectar",
+            fill="blue",
+            font=("Helvetica", 18),
+            activefill="lightblue"  # Cambia de color al pasar el cursor
+        )
+    
+        # Asociar el texto con un evento de clic
+        self.canvas.tag_bind(self.reconnect_text, "<Button-1>", self.reconnect_camera)
+        
+        # if self.reconnect_button is None:
+        # self.reconnect_button = tk.Button(self.canvas, text="Reconectar", command=self.reconnect_camera)
+        # self.reconnect_button.place(x=self.canvas_width // 2 - 50, y=(self.canvas_height // 2) + 30)
+        # else:
+        #     self.reconnect_button.place_forget()  # Asegúrate de que el botón no esté visible antes
     #!-----------------------------------------------
 
     def hide_reconnect_button(self):
         # Ocultar el botón de reconexión si está visible
-        if self.reconnect_button is not None:
-            self.reconnect_button.place_forget()
-            self.reconnect_button = None
+        # if self.reconnect_button is not None:
+        #     self.reconnect_button.place_forget()
+        #     self.reconnect_button = None
+        self.reconnect_button.place_forget()
+        # self.reconnect_button = None
 
 
-    def reconnect_camera(self):
+    def reconnect_camera(self, event=None):
         print("Reconectando cámara...1")  # Para depuración
     
         # Intentar reconectar la cámara
@@ -471,7 +714,7 @@ class UmbralApp:
         print("Reconectando cámara...2")  # Para depuración
     
         # self.reconnect_button.pack_forget()
-        self.hide_reconnect_button()
+        # self.hide_reconnect_button()
         print("Reconectando cámara...3")  # Para depuración
     
         # self.reconnect_button = None
@@ -480,28 +723,59 @@ class UmbralApp:
     def mover_arriba(self):
         # Ajusta el valor de desplazamiento
         self.desplazamiento_y -= 1
+        self.Boton_Guardar_Calib.place(x=150, y=2)
+        # self.hacer_parpadear()
 
     def mover_abajo(self):
         # Ajusta el valor de desplazamiento
         self.desplazamiento_y += 1
+        self.Boton_Guardar_Calib.place(x=150, y=2)
+        # self.hacer_parpadear()
 
     def mover_Umbral_izquierda(self):
         # Ajusta el ángulo de rotación
         self.desplaz_x -= 5
+        self.Boton_Guardar_Calib.place(x=150, y=2)
        
     def mover_Umbral_derecha(self):
         # Ajusta el ángulo de rotación
         self.desplaz_x += 5
+        self.Boton_Guardar_Calib.place(x=150, y=2)
        
+
+
+    def mover_Centro_izquierda(self):
+        # Ajusta el ángulo de rotación
+        self.desplaz_centro_x -= 1
+        self.label_correccion_centro_num.config(text=self.desplaz_centro_x)
+        self.Boton_Guardar_Calib.place(x=150, y=2)
+       
+    def mover_Centro_derecha(self):
+        # Ajusta el ángulo de rotación
+        self.desplaz_centro_x += 1
+        self.label_correccion_centro_num.config(text=self.desplaz_centro_x)
+        self.Boton_Guardar_Calib.place(x=150, y=2)
+
+
+
+
+
+
     def rotar_Umbral_izquierda(self):
         # Ajusta el ángulo de rotación
         self.anguloIzq += 1
         self.anguloDer -= 1
+        print("AnguloIzq... ", self.anguloIzq)
+        print("AnguloDer... ", self.anguloDer)
+        self.Boton_Guardar_Calib.place(x=150, y=2)
        
     def rotar_Umbral_derecha(self):
         # Ajusta el ángulo de rotación
         self.anguloIzq -= 1
         self.anguloDer += 1
+        print("AnguloIzq... ", self.anguloIzq)
+        print("AnguloDer... ", self.anguloDer)
+        self.Boton_Guardar_Calib.place(x=150, y=2)
 
 
 
@@ -511,6 +785,7 @@ class UmbralApp:
 
     def borrar_puntos(self, event):
         "Borra los puntos seleccionados."
+        self.Boton_Guardar_Calib.place_forget()
         self.points = []  # Limpiar la lista de puntos
         self.label_punto1.config(text="P1: (0, 0)")  # Limpiar el label del punto 1
         self.label_punto2.config(text="P2: (0, 0)")  # Limpiar el label del punto 2
@@ -522,6 +797,10 @@ class UmbralApp:
         self.boton_abajo['state'] = 'disabled'
         self.boton_izquierda['state'] = 'disabled'
         self.boton_derecha['state'] = 'disabled'
+        # self.Boton_Guardar_Calib['state'] = 'disabled'
+        self.boton_izquierda_centro['state'] = 'disabled'
+        # self.zoom_focus['state'] = 'disabled'
+        self.boton_derecha_centro['state'] = 'disabled'
         self.boton_rotar_izquierda['state'] = 'disabled'
         self.boton_rotar_derecha['state'] = 'disabled'
         self.boton_color['state'] = 'disabled'
@@ -576,6 +855,9 @@ class UmbralApp:
         self.boton_abajo.place(x=415, y=2)
         self.boton_izquierda.place(x=445, y=2)
         self.boton_derecha.place(x=474, y=2)
+        # self.Boton_Guardar_Calib.place(x=150, y=2)
+        self.boton_izquierda_centro.place(x=245, y=2)
+        self.boton_derecha_centro.place(x=274, y=2)
         self.boton_rotar_izquierda.place(x=508, y=2)
         self.boton_rotar_derecha.place(x=538, y=2)
         
@@ -597,7 +879,7 @@ class UmbralApp:
         self.spacing = float(self.spacing1.get())
         self.linea_de_inicio = float(self.spacing_linea_de_inicio.get())
         self.borde_vertical = float(self.umbral_Vert.get())
-
+        
 
     # def dibujando_puntos(self, frame):
     #     """Dibuja los puntos seleccionados en el frame."""
@@ -701,6 +983,28 @@ class UmbralApp:
                     # break
 
 
+
+    # def capturar_frames(self):
+    #     """Método para capturar frames de la cámara en un hilo separado."""
+    #     while self.capturando:
+    #         if self.cap is not None:
+    #             ret, frame = self.cap.read()
+    #             if ret:
+    #                 self.frame_actual = frame  # Almacena el frame actual si se captura correctamente
+    #             else:
+    #                 self.frame_actual = None  # Si no se pudo leer el frame, establece a None
+    #         else:
+    #             if not self.mensaje_error:
+    #                 print("Error: La cámara no se inicializó correctamente.")
+    #                 self.mensaje_error = True  # Evita mostrar el error múltiples veces
+    #                 self.capturando = False  # Detiene el hilo de captura si hay error
+    #                 if self.cap is not None:
+    #                     self.cap.release()  # Libera la cámara al detectar un error
+    #                 break  # Salir del bucle si no hay cámara
+
+
+
+
     def cambiar_color(self, event=None):
         # Define una lista de colores para alternar
         # colores = ["red", "blue", "green", "yellow", "purple", "orange", "black", "white"]
@@ -724,6 +1028,15 @@ class UmbralApp:
 
 
 
+    def hacer_parpadear(self):
+        # Cambia el color de fondo del botón
+        if self.Boton_Guardar_Calib.cget("bg") == "red":
+            self.Boton_Guardar_Calib.config(bg="lightgray")
+        else:
+            self.Boton_Guardar_Calib.config(bg="red")
+        
+        # Vuelve a llamar a la función después de 500 ms (0.5 segundos)
+        self.master.after(500, self.hacer_parpadear)
 
 
 
@@ -735,6 +1048,10 @@ class UmbralApp:
             self.mostrar_pantalla_negra()
             # return 
         else:
+
+
+            
+
             frame = self.frame_actual.copy()
 
             # Redimensionar el frame aplicando el factor de zoom
@@ -776,12 +1093,26 @@ class UmbralApp:
 
             # Dibuja líneas si se han seleccionado dos puntos
             if len(self.points) == 2:
+
+
+                self.setear_p1(self.points[0][0] , self.points[0][1])
+                self.setear_p2(self.points[1][0] , self.points[1][1])
+                self.label_punto1.config(bg="lightgreen")
                 self.label_punto2.config(bg="lightgreen")
+
+
+                # print("Self.Points...", self.points)
+
+
 
                 self.boton_arriba['state'] = 'normal'           # Enabled button
                 self.boton_abajo['state'] = 'normal'
                 self.boton_izquierda['state'] = 'normal'
                 self.boton_derecha['state'] = 'normal'
+                self.boton_izquierda_centro['state'] = 'normal'
+                # self.Boton_Guardar_Calib['state'] = 'normal'
+                # self.zoom_focus['state'] = 'normal'
+                self.boton_derecha_centro['state'] = 'normal'
                 self.boton_rotar_izquierda['state'] = 'normal'
                 self.boton_rotar_derecha['state'] = 'normal'
                 self.boton_color['state'] = 'normal'
@@ -818,13 +1149,17 @@ class UmbralApp:
                 frame_height, frame_width = frame.shape[:2]
                 # print(f"Tamaño del frame: {frame_width}x{frame_height}")
 
-                centro_vertical_start = ((frame_width // 2)+self.correccion_centro , 0)
-                centro_vertical_end = ((frame_width // 2)+self.correccion_centro , frame_height)
+                # centro_vertical_start = ((frame_width // 2)+self.correccion_centro , 0)
+                # centro_vertical_end = ((frame_width // 2)+self.correccion_centro , frame_height)
+                centro_vertical_start = ((frame_width // 2)+self.desplaz_centro_x , 0)
+                centro_vertical_end = ((frame_width // 2)+self.desplaz_centro_x , frame_height)
                 centro_horizontal_start = (0, frame_height // 2)
                 centro_horizontal_end = (frame_width, frame_height // 2)
             
-                vertical_add_start = ((frame_width // 2)+self.correccion_centro+self.borde_vertical , 0)
-                vertical_add_end = ((frame_width // 2)+self.correccion_centro+self.borde_vertical , frame_height)
+                # vertical_add_start = ((frame_width // 2)+self.correccion_centro+self.borde_vertical , 0)
+                # vertical_add_end = ((frame_width // 2)+self.correccion_centro+self.borde_vertical , frame_height)
+                vertical_add_start = ((frame_width // 2)+self.desplaz_centro_x+self.borde_vertical , 0)
+                vertical_add_end = ((frame_width // 2)+self.desplaz_centro_x+self.borde_vertical , frame_height)
 
 
 
@@ -871,10 +1206,20 @@ class UmbralApp:
     def on_closing(self):
         # Detener la captura y liberar la cámara al cerrar la aplicación
         self.capturando = False  # Detener el hilo de captura
-        if self.cap is not None:
+        if self.cap is not None and self.cap.isOpened():
             self.cap.release()
         self.master.destroy()
 
+
+    # def on_closing(self):
+    #     # Detener la captura y liberar la cámara al cerrar la aplicación
+    #     print("Cerrando aplicación...")
+    #     self.capturando = False  # Detener el hilo de captura
+    #     self.thread.join()  # Esperar a que el hilo termine antes de proceder
+    #     if self.cap is not None and self.cap.isOpened():
+    #         self.cap.release()  # Liberar la cámara
+    #     self.master.quit()  # Salir de la aplicación
+    #     self.master.destroy()  # Cerrar la ventana
 
 
 
